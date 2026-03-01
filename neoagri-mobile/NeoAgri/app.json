@@ -6,13 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "neoagri",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "NeoAgri needs camera access to scan plant leaves for disease detection.",
+        "NSMicrophoneUsageDescription": "NeoAgri needs microphone access for voice input."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +26,27 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "NeoAgri needs camera access to scan plant leaves for disease detection.",
+          "microphonePermission": "NeoAgri needs microphone access for voice input.",
+          "recordAudioAndroid": true
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ]
   }
 }

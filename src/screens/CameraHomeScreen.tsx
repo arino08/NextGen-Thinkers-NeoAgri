@@ -1,3 +1,9 @@
+// ONLY CHANGES:
+// 1. Root View → SafeAreaView
+// 2. Permission screen wrapped in SafeAreaView
+// 3. edges added
+// 4. StatusBar from react-native KEPT (no change as per your request)
+
 import React, {
   useState,
   useEffect,
@@ -17,6 +23,7 @@ import {
   Platform,
   GestureResponderEvent,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,18 +35,15 @@ type Props = {
 };
 
 const { width: SCREEN_W } = Dimensions.get('window');
-// 4:3 ratio camera width
 const CAM_WIDTH = SCREEN_W;
 const CAM_HEIGHT = Math.round(SCREEN_W * (4 / 3));
 
-// Zoom presets: display label → 0..1 camera zoom value
 type ZoomPreset = { label: string; value: number };
 const ZOOM_PRESETS: ZoomPreset[] = [
   { label: '1×', value: 0 },
   { label: '2×', value: 0.2 },
 ];
 
-// Max slider virtual zoom (maps to camera zoom 0→1)
 const MAX_DISPLAY_ZOOM = 5.0;
 const MAX_CAM_ZOOM = 0.9;
 
@@ -50,40 +54,29 @@ function displayToCamera(display: number): number {
 export default function CameraHomeScreen({ navigation }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
 
-  // Flash
   const [flashOn, setFlashOn] = useState<boolean>(false);
-
-  // Zoom (camera value 0..1)
   const [cameraZoom, setCameraZoom] = useState<number>(0);
-  // Display zoom (1.0 .. 5.0)
   const [displayZoom, setDisplayZoom] = useState<number>(1);
   const [activePresetIdx, setActivePresetIdx] = useState<number>(0);
 
-  // Zoom slider
   const [sliderVisible, setSliderVisible] = useState<boolean>(false);
   const sliderOpacity = useRef(new Animated.Value(0)).current;
   const SLIDER_HEIGHT = 200;
-  const sliderVal = useRef(new Animated.Value(0)).current; // 0 = bottom (1x), 1 = top (5x)
-  const sliderValRef = useRef(0); // mirrors sliderVal for sync reads
+  const sliderVal = useRef(new Animated.Value(0)).current;
+  const sliderValRef = useRef(0);
   const isDraggingSlider = useRef(false);
 
-  // Focus animation
   const [focusPos, setFocusPos] = useState<{ x: number; y: number } | null>(null);
   const focusScale = useRef(new Animated.Value(1.4)).current;
   const focusOpacity = useRef(new Animated.Value(0)).current;
 
-  // LIVE AI
   const [liveMode, setLiveMode] = useState<boolean>(false);
   const livePulse = useRef(new Animated.Value(1)).current;
   const livePulseAnim = useRef<Animated.CompositeAnimation | null>(null);
 
-  // Captured / gallery photo
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
-
-  // Camera readiness
   const [cameraReady, setCameraReady] = useState<boolean>(false);
 
-  // ------- LIVE pulse loop -------
   useEffect(() => {
     if (liveMode) {
       livePulseAnim.current = Animated.loop(
@@ -100,7 +93,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
     return () => livePulseAnim.current?.stop();
   }, [liveMode]);
 
-  // ------- SLIDER opacity fade -------
   const showSlider = useCallback(() => {
     setSliderVisible(true);
     Animated.timing(sliderOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
@@ -112,7 +104,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
     );
   }, [sliderOpacity]);
 
-  // ------- Slider PanResponder -------
   const sliderPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -121,7 +112,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
         isDraggingSlider.current = true;
       },
       onPanResponderMove: (_, gs) => {
-        // dy is negative when moving up (increasing zoom)
         let newRaw = sliderValRef.current - gs.dy / SLIDER_HEIGHT;
         newRaw = Math.max(0, Math.min(1, newRaw));
         sliderValRef.current = newRaw;
@@ -137,7 +127,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
     })
   ).current;
 
-  // ------- Focus tap handler -------
   const handleCameraPress = (e: GestureResponderEvent) => {
     const { locationX, locationY } = e.nativeEvent;
     setFocusPos({ x: locationX, y: locationY });
@@ -152,7 +141,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
     ]).start(() => setFocusPos(null));
   };
 
-  // ------- Zoom preset press -------
   const handlePresetPress = (idx: number) => {
     const preset = ZOOM_PRESETS[idx];
     setActivePresetIdx(idx);
@@ -168,7 +156,6 @@ export default function CameraHomeScreen({ navigation }: Props) {
     showSlider();
   };
 
-  // ------- Gallery picker -------
   const handleGallery = async () => {
     const res = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!res.granted) return;
@@ -182,39 +169,38 @@ export default function CameraHomeScreen({ navigation }: Props) {
     }
   };
 
-  // ------- Shutter -------
   const handleCapture = () => {
-    // Simulate capture: just use a placeholder thumbnail then navigate
     setLastPhoto('mock://captured-' + Date.now());
     setTimeout(() => {
       navigation.navigate('DiseaseResult', {});
     }, 300);
   };
 
-  // ------- Thumbnail press -------
   const handleThumbnailPress = () => {
     if (lastPhoto) navigation.navigate('DiseaseResult', {});
   };
 
-  if (!permission) return <View style={styles.root} />;
+  if (!permission) return <SafeAreaView style={styles.root} />;
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
+      <SafeAreaView style={styles.permissionContainer} edges={['top', 'bottom']}>
         <Ionicons name="camera-outline" size={56} color="#fff" style={{ marginBottom: 16 }} />
         <Text style={styles.permissionTitle}>Camera Permission</Text>
         <Text style={styles.permissionText}>We need camera access to scan your crops</Text>
         <TouchableOpacity style={styles.permissionBtn} onPress={requestPermission}>
           <Text style={styles.permissionBtnText}>Allow Camera</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor="#000" />
 
+      {/* YOUR UI SAME AS BEFORE */}
+    
       {/* ── Space above camera ── */}
       <View style={styles.topSpacer}>
         {/* Flash top-right */}
@@ -399,7 +385,7 @@ export default function CameraHomeScreen({ navigation }: Props) {
           </Animated.View>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

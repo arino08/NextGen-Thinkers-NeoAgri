@@ -1,161 +1,274 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
-import { spacing, borderRadius, shadows } from '../theme/spacing';
-import { LanguageContext } from '../context/LanguageContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface Message {
+type Message = {
   id: number;
   type: 'ai' | 'user';
   text: string;
-}
+};
 
 export default function AIAssistantScreen() {
-  const ctx = useContext(LanguageContext);
-  const t = ctx?.t ?? ((k: string) => k);
-  const [cameraEnabled, setCameraEnabled] = useState<boolean>(false);
-  const [isListening, setIsListening] = useState<boolean>(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
-  const messages: Message[] = [
-    { id: 1, type: 'ai', text: 'Hello! I am your NeoAgri farming assistant. How can I help you today?' },
-    { id: 2, type: 'user', text: 'My tomato plants have yellow spots.' },
-    { id: 3, type: 'ai', text: 'Yellow spots can indicate early blight, septoria leaf spot, or nutrient deficiency. Want me to take a look via the camera?' },
-  ];
+  const scrollRef = useRef<any>(null);
+
+  // 🔥 typing animation
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isTyping) {
+      Animated.loop(
+        Animated.stagger(150, [
+          bounce(dot1),
+          bounce(dot2),
+          bounce(dot3),
+        ])
+      ).start();
+    }
+  }, [isTyping]);
+
+  const bounce = (val: Animated.Value) =>
+    Animated.sequence([
+      Animated.timing(val, { toValue: -6, duration: 250, useNativeDriver: true }),
+      Animated.timing(val, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]);
+
+  const sendMessage = (text: string) => {
+    if (!text.trim() || isTyping) return;
+
+    const userMsg: Message = {
+      id: Date.now(),
+      type: 'user',
+      text,
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+
+    let reply = "Didn't understand that.";
+    const lower = text.toLowerCase();
+
+    if (lower.includes('hi') || lower.includes('hello')) {
+      reply = "Hey 👋 How can I help you?";
+    } else if (lower.includes('crop')) {
+      reply = "Tell me your crop issue 🌾";
+    } else if (lower.includes('weather')) {
+      reply = "Share location for weather 🌤️";
+    } else if (lower.includes('soil')) {
+      reply = "I’ll help with soil nutrients 🌱";
+    }
+
+    setTimeout(() => {
+      const aiMsg: Message = {
+        id: Date.now() + 1,
+        type: 'ai',
+        text: reply,
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, 1500);
+  };
+
+  const handleSend = () => {
+    sendMessage(input);
+    setInput('');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
+      
+      {/* HEADER */}
       <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Ionicons name="sparkles" color={colors.primaryGreen} size={24} />
-          <Text style={styles.headerTitle}>{t('assistantTitle')}</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.cameraToggle, cameraEnabled && styles.cameraToggleActive]}
-          onPress={() => setCameraEnabled(!cameraEnabled)}
+        <Text style={styles.headerTitle}>🌱 Farm AI</Text>
+        <Text style={styles.headerSub}>Ask anything about farming</Text>
+      </View>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+
+        {/* CHAT */}
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.chat}
+          keyboardShouldPersistTaps="handled"
+          onContentSizeChange={() =>
+            scrollRef.current?.scrollToEnd({ animated: true })
+          }
         >
-          <Ionicons
-            name={cameraEnabled ? 'camera' : 'camera-outline'}
-            color={cameraEnabled ? colors.white : colors.textSecondary}
-            size={20}
+          {messages.length === 0 && (
+            <Text style={styles.empty}>Start chatting 👇</Text>
+          )}
+
+          {messages.map((m) => (
+            <View
+              key={m.id}
+              style={[
+                styles.msg,
+                m.type === 'user' ? styles.user : styles.ai,
+              ]}
+            >
+              <Text style={m.type === 'user' ? styles.userText : styles.aiText}>
+                {m.text}
+              </Text>
+            </View>
+          ))}
+
+          {isTyping && (
+            <View style={[styles.msg, styles.ai]}>
+              <View style={{ flexDirection: 'row', gap: 5 }}>
+                <Animated.View style={[styles.dot, { transform: [{ translateY: dot1 }] }]} />
+                <Animated.View style={[styles.dot, { transform: [{ translateY: dot2 }] }]} />
+                <Animated.View style={[styles.dot, { transform: [{ translateY: dot3 }] }]} />
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* QUICK BUTTONS */}
+        <View style={styles.quick}>
+          {['Crop', 'Weather', 'Soil'].map((item) => (
+            <TouchableOpacity
+              key={item}
+              disabled={isTyping}
+              onPress={() => sendMessage(item)}
+              style={styles.quickBtn}
+            >
+              <Text style={styles.quickText}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* INPUT */}
+        <View style={styles.inputRow}>
+          <TextInput
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask your question..."
+            style={styles.input}
+            editable={!isTyping}
           />
-        </TouchableOpacity>
-      </View>
-
-      {cameraEnabled && (
-        <View style={styles.liveCameraPlaceholder}>
-          <Text style={styles.liveCameraText}>{t('liveCameraActive')}</Text>
-        </View>
-      )}
-
-      <ScrollView contentContainerStyle={styles.chatContainer}>
-        {messages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.messageBubble,
-              msg.type === 'user' ? styles.userBubble : styles.aiBubble,
-            ]}
+          <TouchableOpacity
+            onPress={handleSend}
+            disabled={isTyping}
+            style={styles.send}
           >
-            <Text style={[styles.messageText, msg.type === 'user' ? styles.userText : styles.aiText]}>
-              {msg.text}
-            </Text>
-            {msg.type === 'ai' && (
-              <TouchableOpacity style={styles.readAloudButton}>
-                <Ionicons name="volume-medium" size={16} color={colors.primaryGreen} />
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+            <Text style={{ color: '#fff' }}>➤</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.bottomArea}>
-        {isListening && (
-          <View style={styles.waveformContainer}>
-            {[16, 24, 32, 24, 16].map((h, i) => (
-              <View key={i} style={[styles.waveBar, { height: h }]} />
-            ))}
-          </View>
-        )}
-        <Text style={styles.statusText}>{isListening ? t('listening') : t('tapToSpeak')}</Text>
-        <TouchableOpacity
-          style={[styles.micButton, isListening && styles.micButtonActive]}
-          onPress={() => setIsListening(!isListening)}
-        >
-          <Ionicons name="mic" color={colors.white} size={36} />
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: '#F4F7F4' },
+
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.cardBackground,
-    ...shadows.soft,
-    zIndex: 10,
+    padding: 16,
+    backgroundColor: '#E8F5E9',
   },
-  headerTitleContainer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   headerTitle: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.primaryGreen,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
-  cameraToggle: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center',
+  headerSub: {
+    fontSize: 13,
+    color: '#4CAF50',
   },
-  cameraToggleActive: { backgroundColor: colors.primaryGreen },
-  liveCameraPlaceholder: {
-    height: 150, backgroundColor: '#1E3120', justifyContent: 'center', alignItems: 'center',
+
+  chat: { padding: 12, gap: 10 },
+
+  msg: {
+    padding: 12,
+    borderRadius: 14,
+    maxWidth: '75%',
   },
-  liveCameraText: { color: colors.white, opacity: 0.8 },
-  chatContainer: { padding: spacing.xl, gap: spacing.md },
-  messageBubble: {
-    maxWidth: '85%', padding: spacing.lg,
-    borderRadius: borderRadius.lg, ...shadows.soft,
+  user: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#4CAF50',
   },
-  userBubble: {
-    alignSelf: 'flex-end', backgroundColor: colors.primaryGreen, borderBottomRightRadius: 4,
+  ai: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#fff',
   },
-  aiBubble: {
-    alignSelf: 'flex-start', backgroundColor: colors.cardBackground, borderBottomLeftRadius: 4,
+
+  userText: { color: '#fff' },
+  aiText: { color: '#333' },
+
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#999',
   },
-  messageText: { fontSize: typography.sizes.md, lineHeight: 24 },
-  userText: { color: colors.white },
-  aiText: { color: colors.textPrimary },
-  readAloudButton: {
-    marginTop: spacing.sm, alignSelf: 'flex-end', padding: spacing.xs,
-    backgroundColor: '#F5F5F5', borderRadius: borderRadius.round,
+
+  quick: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 10,
   },
-  bottomArea: {
-    padding: spacing.xl, alignItems: 'center',
-    justifyContent: 'flex-end', backgroundColor: colors.background,
+
+  quickBtn: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  waveformContainer: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: spacing.md, height: 32,
+
+  quickText: {
+    color: '#2E7D32',
+    fontWeight: '600',
   },
-  waveBar: { width: 4, backgroundColor: colors.primaryGreen, borderRadius: 2 },
-  statusText: {
-    fontSize: typography.sizes.md, color: colors.textSecondary, marginBottom: spacing.md,
+
+  inputRow: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#F4F7F4',
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
   },
-  micButton: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primaryGreen,
-    justifyContent: 'center', alignItems: 'center', ...shadows.medium,
+
+  input: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
   },
-  micButtonActive: { backgroundColor: colors.error },
+
+  send: {
+    marginLeft: 8,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+
+  empty: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: '#777',
+  },
 });

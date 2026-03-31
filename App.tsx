@@ -12,7 +12,7 @@ export default function App() {
       <SafeAreaProvider>
         <LanguageProvider>
           <AppNavigator />
-          <StatusBar style="light" />
+          <StatusBar style="dark" />
         </LanguageProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -3,3 +3,5 @@
 - [x] S2: WebRTC config complete
 - [x] S3: Data Channel events configured
 - [x] S4: useVoiceSession hook complete and ready for Agent 3
+- [x] S5: Offline Keyword Fallback Complete
+- [x] Agent 1 pipeline is DONE!

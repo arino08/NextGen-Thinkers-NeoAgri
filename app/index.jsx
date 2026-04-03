@@ -1,74 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+
 import VoiceOrb from '../components/voice/VoiceOrb';
 import StatusBanner from '../components/voice/StatusBanner';
 import TranscriptFeed from '../components/voice/TranscriptFeed';
+import DiseaseCard from '../components/voice/DiseaseCard';
 import { COLORS } from '../lib/voiceStyles';
 
-// Mock Agent 1 implementation
-const mockSession = {
-  status: 'idle',
-  transcript: '',
-  history: [],
-  isListening: false,
-  amplitude: 0,
-  startSession: () => {},
-  stopSession: () => {},
-  speak: () => {}
-};
-
-const STATES = ['idle', 'connecting', 'listening', 'speaking', 'offline'];
+// Agent 1 & 2 Imports
+import { useVoiceSession } from '../lib/useVoiceSession';
+import { TOOL_HANDLERS } from '../lib/VoiceAgentTools';
+import { voiceEventEmitter } from '../lib/voiceEventEmitter';
 
 export default function Index() {
-  const [currentStateIndex, setCurrentStateIndex] = useState(0);
-  const [amplitude, setAmplitude] = useState(0);
+  const { 
+    status, 
+    transcript, 
+    history, 
+    amplitude, 
+    startSession, 
+    stopSession 
+  } = useVoiceSession(TOOL_HANDLERS);
 
-  const currentState = STATES[currentStateIndex];
+  const [diseaseResult, setDiseaseResult] = useState(null);
 
   useEffect(() => {
-    let interval;
-    if (currentState === 'listening') {
-      interval = setInterval(() => {
-        setAmplitude(Math.random());
-      }, 100);
-    } else {
-      setAmplitude(0);
-    }
-    return () => clearInterval(interval);
-  }, [currentState]);
+    const handler = ({ screen, params }) => router.push({ pathname: `/${screen}`, params });
+    voiceEventEmitter.on('NAVIGATE', handler);
+    return () => voiceEventEmitter.off('NAVIGATE', handler);
+  }, []);
 
-  const cycleState = () => {
-    setCurrentStateIndex((prev) => (prev + 1) % STATES.length);
+  useEffect(() => {
+    const handler = (data) => setDiseaseResult(data);
+    voiceEventEmitter.on('DISEASE_RESULT', handler);
+    return () => voiceEventEmitter.off('DISEASE_RESULT', handler);
+  }, []);
+
+  const toggleSession = () => {
+    if (status === 'idle' || status === 'offline') {
+      startSession();
+    } else {
+      stopSession();
+    }
   };
 
-  // Mock data for Phase 3 testing
-  const mockHistory = [
-    { role: 'user', text: 'नमस्कार, सोयाबीन में कीड़े लग गए हैं' },
-    { role: 'ai', text: 'मैं समझ गया। कृपया मुझे पत्तों की एक फोटो दिखाएँ।' },
-  ];
-  
-  const currentTranscript = currentState === 'listening' ? 'मैं आपको फोटो...' : '';
-
   return (
-    <View style={styles.container}>
-      <StatusBanner status={currentState} />
+    <SafeAreaView style={styles.container}>
+      <StatusBanner status={status} />
       
       <View style={styles.transcriptContainer}>
-        <TranscriptFeed history={mockHistory} transcript={currentTranscript} />
+        <TranscriptFeed history={history} transcript={transcript} />
       </View>
 
       <View style={styles.orbContainer}>
         <VoiceOrb 
-          onPress={cycleState} 
-          state={currentState} 
+          onPress={toggleSession} 
+          state={status} 
           amplitude={amplitude} 
         />
       </View>
-      
-      <TouchableOpacity style={styles.debugButton} onPress={cycleState}>
-        <Text style={styles.debugText}>Current State: {currentState} (Tap to change)</Text>
-      </TouchableOpacity>
-    </View>
+
+      {diseaseResult && (
+        <DiseaseCard 
+          disease={diseaseResult} 
+          onDismiss={() => setDiseaseResult(null)} 
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -77,27 +77,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bg,
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   transcriptContainer: {
     flex: 1,
     width: '100%',
     justifyContent: 'flex-end',
     paddingBottom: 20,
-    paddingTop: 120,
   },
   orbContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     height: 240,
+    marginBottom: 40,
   },
-  debugButton: {
-    marginTop: 40,
-    padding: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8,
-  },
-  debugText: {
-    color: '#fff',
-    fontSize: 14,
-  }
 });

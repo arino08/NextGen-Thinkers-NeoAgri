@@ -1,4 +1,6 @@
 import { db } from './schema';
+import { voiceEventEmitter } from '../lib/voiceEventEmitter';
+import diseaseLabels from '../models/disease_labels.json';
 
 export async function insertScan(scan) {
   const query = `
@@ -15,6 +17,15 @@ export async function insertScan(scan) {
     scan.timestamp,
     scan.synced !== undefined ? scan.synced : 0
   ]);
+  
+  if (scan.label_index !== undefined && diseaseLabels[scan.label_index]) {
+    voiceEventEmitter.emit('DISEASE_RESULT', {
+      disease: scan.disease,
+      severity: diseaseLabels[scan.label_index].severity_hi,
+      cure_hi: diseaseLabels[scan.label_index].cure_hi,
+      confidence: scan.confidence
+    });
+  }
 }
 
 export async function getPendingScans() {

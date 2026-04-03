@@ -7,6 +7,7 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
   const ripple1 = useRef(new Animated.Value(0)).current;
   const ripple2 = useRef(new Animated.Value(0)).current;
   const ripple3 = useRef(new Animated.Value(0)).current;
+  const spinAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let animation;
@@ -75,6 +76,22 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
     }
   }, [state, ripple1, ripple2, ripple3]);
 
+  useEffect(() => {
+    if (state === 'connecting') {
+      spinAnim.setValue(0);
+      Animated.loop(
+        Animated.timing(spinAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinAnim.stopAnimation();
+      spinAnim.setValue(0);
+    }
+  }, [state, spinAnim]);
+
   const renderRipple = (anim) => {
     const scale = anim.interpolate({
       inputRange: [0, 1],
@@ -97,15 +114,23 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
     );
   };
 
+  const spin = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
   return (
     <View style={styles.container}>
       {state === 'speaking' && renderRipple(ripple1)}
       {state === 'speaking' && renderRipple(ripple2)}
       {state === 'speaking' && renderRipple(ripple3)}
+      {state === 'connecting' && (
+        <Animated.View style={[styles.arc, { transform: [{ rotate: spin }] }]} />
+      )}
       <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
         <Animated.View style={[
           styles.orb, 
-          { transform: [{ scale: scaleAnim }], backgroundColor: state === 'speaking' ? COLORS.orbBlue : COLORS.orbTeal }
+          { transform: [{ scale: scaleAnim }], backgroundColor: state === 'speaking' ? COLORS.orbBlue : state === 'connecting' ? COLORS.orbAmber : COLORS.orbTeal }
         ]}>
           <Text style={styles.icon}>🎤</Text>
         </Animated.View>
@@ -130,14 +155,22 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: COLORS.orbTeal,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.orbTeal,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 8,
+  },
+  arc: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 4,
+    borderColor: 'transparent',
+    borderTopColor: COLORS.orbAmber,
+    zIndex: 1,
   },
   icon: {
     fontSize: 64,

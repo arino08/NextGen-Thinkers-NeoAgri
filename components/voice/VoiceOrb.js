@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { COLORS } from '../../lib/voiceStyles';
+import { COLORS, FONTS } from '../../lib/voiceStyles';
 
 export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -130,11 +130,16 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
       <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
         <Animated.View style={[
           styles.orb, 
-          { transform: [{ scale: scaleAnim }], backgroundColor: state === 'speaking' ? COLORS.orbBlue : state === 'connecting' ? COLORS.orbAmber : COLORS.orbTeal }
+          { 
+            transform: [{ scale: scaleAnim }], 
+            backgroundColor: state === 'offline' ? COLORS.orbGrey : state === 'speaking' ? COLORS.orbBlue : state === 'connecting' ? COLORS.orbAmber : COLORS.orbTeal,
+            shadowColor: state === 'offline' ? 'transparent' : COLORS.orbTeal
+          }
         ]}>
           <Text style={styles.icon}>🎤</Text>
         </Animated.View>
       </TouchableOpacity>
+      {state === 'offline' && <Text style={styles.offlineText}>ऑफलाइन</Text>}
     </View>
   );
 }
@@ -143,6 +148,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  offlineText: {
+    ...FONTS.hindiSmall,
+    marginTop: 20,
+    color: COLORS.orbGrey,
   },
   ripple: {
     position: 'absolute',

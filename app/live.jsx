@@ -1,11 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useCameraPermission } from 'react-native-vision-camera';
+import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
+import { useTensorflowModel } from 'react-native-fast-tflite';
+import { runOnJS } from 'react-native-worklets-core';
+import { resize } from 'react-native-vision-camera-resize-plugin';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../lib/voiceStyles';
 
+function handleDetection(labelIndex, confidence) {
+  // implemented in 6.3
+  console.log('Detection:', labelIndex, confidence);
+}
+
 export default function LiveCameraScreen() {
   const { hasPermission, requestPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+  const model = useTensorflowModel(require('../models/neoagri_app_model.tflite'));
+
+  const frameProcessor = useFrameProcessor((frame) => {
+    'worklet';
+    if (model.state !== 'loaded') return;
+    const resized = resize(frame, { scale: { width: 224, height: 224 }, pixelFormat: 'rgb', dataType: 'float32' });
+    const output = model.model.runSync([resized]);
+    const scores = output[0];
+    const maxIdx = scores.indexOf(Math.max(...scores));
+    if (scores[maxIdx] > 0.75) {
+      runOnJS(handleDetection)(maxIdx, scores[maxIdx]);
+    }
+  }, [model]);
 
   if (!hasPermission) {
     return (
@@ -18,10 +40,24 @@ export default function LiveCameraScreen() {
     );
   }
 
+  if (device == null) {
+    return (
+      <SafeAreaView style={styles.permissionContainer}>
+        <Text style={styles.permissionText}>कैमरा नहीं मिला</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.textPlaceholder}>Camera rendering here...</Text>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Camera
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={true}
+        frameProcessor={frameProcessor}
+        fps={5}
+      />
+    </View>
   );
 }
 

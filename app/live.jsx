@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
@@ -6,16 +6,34 @@ import { runOnJS } from 'react-native-worklets-core';
 import { resize } from 'react-native-vision-camera-resize-plugin';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../lib/voiceStyles';
+import { useRouter } from 'expo-router';
 
-function handleDetection(labelIndex, confidence) {
-  // implemented in 6.3
-  console.log('Detection:', labelIndex, confidence);
-}
+const DISEASE_LABELS = {
+  0: 'healthy',
+  1: 'early_blight',
+  2: 'late_blight',
+  3: 'leaf_spot',
+  4: 'powdery_mildew'
+};
 
 export default function LiveCameraScreen() {
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
+  const router = useRouter();
+  const [detection, setDetection] = useState(null);
+
   const model = useTensorflowModel(require('../models/neoagri_app_model.tflite'));
+
+  const handleDetection = (labelIndex, confidence) => {
+    const label = DISEASE_LABELS[labelIndex];
+    if (label) {
+      setDetection({ label, confidence });
+      setTimeout(() => {
+        router.back();
+        // Typically here we would trigger the callback to agent2
+      }, 1500); 
+    }
+  };
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
@@ -57,6 +75,12 @@ export default function LiveCameraScreen() {
         frameProcessor={frameProcessor}
         fps={5}
       />
+      {detection && (
+        <View style={styles.detectionBox}>
+          <Text style={styles.detectionLabel}>{detection.label}</Text>
+          <Text style={styles.detectionScore}>{(detection.confidence * 100).toFixed(1)}%</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -64,7 +88,27 @@ export default function LiveCameraScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: COLORS.bgBlack,
+  },
+  detectionBox: {
+    position: 'absolute',
+    bottom: 50,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  detectionLabel: {
+    color: COLORS.orbTeal,
+    fontFamily: FONTS.hindiBold,
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  detectionScore: {
+    color: COLORS.gray,
+    fontFamily: FONTS.hindiRegular,
+    fontSize: 18,
   },
   permissionContainer: {
     flex: 1,

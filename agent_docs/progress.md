@@ -6,3 +6,4 @@
 
 - ✅ Phase 2 (StatusBanner) completed
 - ✅ Phase 3 (TranscriptFeed) completed
+- ✅ Phase 4 (DiseaseCard) completed

@@ -17,7 +17,7 @@ export async function insertScan(scan) {
     scan.timestamp,
     scan.synced !== undefined ? scan.synced : 0
   ]);
-  
+
   if (scan.label_index !== undefined && diseaseLabels[scan.label_index]) {
     voiceEventEmitter.emit('DISEASE_RESULT', {
       disease: scan.disease,

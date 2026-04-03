@@ -23,9 +23,9 @@ export async function getOfflineMarkers() {
   } catch (err) {
     console.log("Could not fetch location:", err);
   }
-  
+
   const markers = await getAllMarkers();
-  
+
   if (!pos) {
     return markers.map(m => ({ ...m, distance_km: 0 })); // Fallback if no location
   }
@@ -82,6 +82,6 @@ export async function syncPendingScans() {
   } catch (error) {
     console.warn("Sync failed (offline?):", error);
   }
-  
+
   return { synced };
 }

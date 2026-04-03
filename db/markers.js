@@ -1,10 +1,10 @@
 import { db } from './schema';
 
 export async function insertMarker(marker) {
-  const query = \`
+  const query = `
     INSERT OR REPLACE INTO drone_markers (capture_id, latitude, longitude, disease, confidence, timestamp, synced)
     VALUES (?, ?, ?, ?, ?, ?, ?);
-  \`;
+  `;
   await db.runAsync(query, [
     marker.capture_id,
     marker.latitude,

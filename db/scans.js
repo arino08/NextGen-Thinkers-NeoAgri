@@ -1,10 +1,10 @@
 import { db } from './schema';
 
 export async function insertScan(scan) {
-  const query = \`
+  const query = `
     INSERT OR REPLACE INTO manual_scans (capture_id, latitude, longitude, disease, confidence, image_path, timestamp, synced)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-  \`;
+  `;
   await db.runAsync(query, [
     scan.capture_id,
     scan.latitude || null,
@@ -24,6 +24,6 @@ export async function getPendingScans() {
 export async function markScansAsSynced(ids) {
   if (!ids || ids.length === 0) return;
   const placeholders = ids.map(() => '?').join(',');
-  const query = \`UPDATE manual_scans SET synced = 1 WHERE id IN (\${placeholders});\`;
+  const query = `UPDATE manual_scans SET synced = 1 WHERE id IN (${placeholders});`;
   await db.runAsync(query, ids);
 }

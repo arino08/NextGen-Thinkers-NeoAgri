@@ -4,6 +4,12 @@ import { COLORS, FONTS } from '../../lib/voiceStyles';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const severityColor = {
+  'अधिक': COLORS.severityHigh,
+  'मध्यम': COLORS.severityMedium,
+  'कोई नहीं': COLORS.severityNone,
+};
+
 export default function DiseaseCard({ disease, onDismiss }) {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
@@ -66,7 +72,7 @@ export default function DiseaseCard({ disease, onDismiss }) {
         
         <Text style={styles.title}>{disease.name_hi}</Text>
         
-        <View style={[styles.badge, { backgroundColor: COLORS.severityHigh }]}>
+        <View style={[styles.badge, { backgroundColor: severityColor[disease.severity_hi] || COLORS.severityMedium }]}>
           <Text style={styles.badgeText}>{disease.severity_hi}</Text>
         </View>
         

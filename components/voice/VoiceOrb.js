@@ -1,12 +1,43 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { COLORS } from '../../lib/voiceStyles';
 
-export default function VoiceOrb({ onPress }) {
+export default function VoiceOrb({ onPress, state = 'idle' }) {
+  const idlePulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    let animation;
+    if (state === 'idle') {
+      animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(idlePulse, {
+            toValue: 1.05,
+            duration: 1250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(idlePulse, {
+            toValue: 1.0,
+            duration: 1250,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animation.start();
+    } else {
+      idlePulse.setValue(1);
+    }
+    
+    return () => {
+      if (animation) animation.stop();
+    };
+  }, [state]);
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.orb}>
-        <Text style={styles.icon}>🎤</Text>
+      <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
+        <Animated.View style={[styles.orb, { transform: [{ scale: idlePulse }] }]}>
+          <Text style={styles.icon}>🎤</Text>
+        </Animated.View>
       </TouchableOpacity>
     </View>
   );

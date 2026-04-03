@@ -1,4 +1,4 @@
-import TestAudio from './app/test-audio';
+import TestWebRTC from './app/test-webrtc';
 export default function App() {
-  return <TestAudio />;
+  return <TestWebRTC />;
 }

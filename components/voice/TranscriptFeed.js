@@ -1,9 +1,29 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { COLORS, FONTS } from '../../lib/voiceStyles';
 
 export default function TranscriptFeed({ transcript = '', history = [] }) {
   const recentHistory = history.slice(-3);
+  const cursorOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(cursorOpacity, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cursorOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [cursorOpacity]);
 
   return (
     <View style={styles.container}>
@@ -23,7 +43,7 @@ export default function TranscriptFeed({ transcript = '', history = [] }) {
         <View style={[styles.bubble, styles.userBubble]}>
           <Text style={styles.text}>
             {transcript}
-            <Text style={styles.cursor}>|</Text>
+            <Animated.Text style={[styles.cursor, { opacity: cursorOpacity }]}>|</Animated.Text>
           </Text>
         </View>
       )}

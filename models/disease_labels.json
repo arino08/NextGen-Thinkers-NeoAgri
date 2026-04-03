@@ -30,5 +30,13 @@
         "severity_hi": "मध्यम",
         "cure": "Apply Carbendazim 1g/liter",
         "cure_hi": "कार्बेन्डाज़िम 1g प्रति लीटर पानी में डालें"
+    },
+    "4": {
+        "name": "Powdery Mildew",
+        "name_hi": "पाउडरी मिल्ड्यू",
+        "severity": "High",
+        "severity_hi": "अधिक",
+        "cure": "Apply sulfur-based treatments.",
+        "cure_hi": "सल्फर-आधारित उपचार लागू करें।"
     }
 }

@@ -1,8 +1,7 @@
+import { Stack } from 'expo-router';
 import { registerGlobals } from 'react-native-webrtc';
 registerGlobals();
 
-import { Slot } from 'expo-router';
-
 export default function Layout() {
-  return <Slot />;
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

@@ -23,12 +23,17 @@
       "edgeToEdgeEnabled": true,
       "package": "com.arino08.neoagrimobile"
     },
+    "scheme": "neoagri",
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
+      "expo-router",
+      "expo-font",
       "expo-sqlite",
-      "react-native-vision-camera"
+      "react-native-vision-camera",
+      "react-native-fast-tflite"
     ]
   }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import VoiceOrb from '../components/voice/VoiceOrb';
+import StatusBanner from '../components/voice/StatusBanner';
 import { COLORS } from '../lib/voiceStyles';
 
 // Mock Agent 1 implementation
@@ -41,6 +42,7 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
+      <StatusBanner status={currentState} />
       <VoiceOrb 
         onPress={cycleState} 
         state={currentState} 

@@ -1,0 +1,7 @@
+{
+  "0": { "name": "Caterpillar and Semilooper Pest Attack", "severity": "High", "cure": "Spray effective insecticides like chlorantraniliprole." },
+  "1": { "name": "Healthy Soyabean", "severity": "None", "cure": "No action needed." },
+  "2": { "name": "Soyabean Frog Leaf Eye", "severity": "Medium", "cure": "Apply fungicide such as thiophanate-methyl." },
+  "3": { "name": "Soyabean Spectoria Brown Spot", "severity": "Medium", "cure": "Use copper-based fungicides during early stages." },
+  "4": { "name": "Powdery Mildew", "severity": "High", "cure": "Apply sulfur-based treatments." }
+}

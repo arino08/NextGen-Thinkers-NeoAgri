@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
@@ -8,30 +8,47 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../lib/voiceStyles';
 import { useRouter } from 'expo-router';
 
-const DISEASE_LABELS = {
-  0: 'healthy',
-  1: 'early_blight',
-  2: 'late_blight',
-  3: 'leaf_spot',
-  4: 'powdery_mildew'
-};
+// Agent 2 Integration
+import { saveScan } from '../db/offlineSync';
+import { voiceEventEmitter } from '../lib/voiceEventEmitter';
+import DiseaseCard from '../components/voice/DiseaseCard';
 
 export default function LiveCameraScreen() {
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const router = useRouter();
-  const [detection, setDetection] = useState(null);
+  const [diseaseResult, setDiseaseResult] = useState(null);
+
+  useEffect(() => {
+    const handler = (data) => setDiseaseResult(data);
+    voiceEventEmitter.on('DISEASE_RESULT', handler);
+    return () => voiceEventEmitter.off('DISEASE_RESULT', handler);
+  }, []);
 
   const model = useTensorflowModel(require('../models/neoagri_app_model.tflite'));
 
   const handleDetection = (labelIndex, confidence) => {
-    const label = DISEASE_LABELS[labelIndex];
-    if (label) {
-      setDetection({ label, confidence });
-      setTimeout(() => {
-        router.back();
-        // Typically here we would trigger the callback to agent2
-      }, 1500); 
+    try {
+      const labels = require('../models/disease_labels.json');
+      const label = labels[String(labelIndex)];
+      if (label) {
+        saveScan({ 
+          disease: label.name, 
+          label_index: labelIndex, 
+          confidence, 
+          timestamp: new Date().toISOString() 
+        });
+        
+        // As a fallback since saveScan is mocked currently, we'll also emit manually so UI updates
+        voiceEventEmitter.emit('DISEASE_RESULT', {
+            name: label.name,
+            severity: label.severity,
+            cure: label.cure,
+            confidence
+        });
+      }
+    } catch (err) {
+      console.error('Detection error:', err);
     }
   };
 
@@ -75,11 +92,15 @@ export default function LiveCameraScreen() {
         frameProcessor={frameProcessor}
         fps={5}
       />
-      {detection && (
-        <View style={styles.detectionBox}>
-          <Text style={styles.detectionLabel}>{detection.label}</Text>
-          <Text style={styles.detectionScore}>{(detection.confidence * 100).toFixed(1)}%</Text>
-        </View>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Text style={styles.backButtonText}>Cancel</Text>
+      </TouchableOpacity>
+      
+      {diseaseResult && (
+        <DiseaseCard
+          disease={diseaseResult}
+          onDismiss={() => setDiseaseResult(null)}
+        />
       )}
     </View>
   );
@@ -90,25 +111,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.bgBlack,
   },
-  detectionBox: {
+  backButton: {
     position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
+    top: 50,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    padding: 10,
+    borderRadius: 8,
   },
-  detectionLabel: {
-    color: COLORS.orbTeal,
-    fontFamily: FONTS.hindiBold,
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  detectionScore: {
-    color: COLORS.gray,
-    fontFamily: FONTS.hindiRegular,
-    fontSize: 18,
+  backButtonText: {
+    color: '#FFF',
   },
   permissionContainer: {
     flex: 1,

@@ -30,7 +30,7 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
     } else if (state !== 'listening') {
       scaleAnim.setValue(1);
     }
-    
+
     return () => {
       if (animation) animation.stop();
     };
@@ -129,9 +129,9 @@ export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
       )}
       <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
         <Animated.View style={[
-          styles.orb, 
-          { 
-            transform: [{ scale: scaleAnim }], 
+          styles.orb,
+          {
+            transform: [{ scale: scaleAnim }],
             backgroundColor: state === 'offline' ? COLORS.orbGrey : state === 'speaking' ? COLORS.orbBlue : state === 'connecting' ? COLORS.orbAmber : COLORS.orbTeal,
             shadowColor: state === 'offline' ? 'transparent' : COLORS.orbTeal
           }

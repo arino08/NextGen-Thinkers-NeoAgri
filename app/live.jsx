@@ -32,13 +32,13 @@ export default function LiveCameraScreen() {
       const labels = require('../models/disease_labels.json');
       const label = labels[String(labelIndex)];
       if (label) {
-        saveScan({ 
-          disease: label.name, 
-          label_index: labelIndex, 
-          confidence, 
-          timestamp: new Date().toISOString() 
+        saveScan({
+          disease: label.name,
+          label_index: labelIndex,
+          confidence,
+          timestamp: new Date().toISOString()
         });
-        
+
         // As a fallback since saveScan is mocked currently, we'll also emit manually so UI updates
         voiceEventEmitter.emit('DISEASE_RESULT', {
             name: label.name,
@@ -95,7 +95,7 @@ export default function LiveCameraScreen() {
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Cancel</Text>
       </TouchableOpacity>
-      
+
       {diseaseResult && (
         <DiseaseCard
           disease={diseaseResult}

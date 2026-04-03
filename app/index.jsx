@@ -15,13 +15,13 @@ import { TOOL_HANDLERS } from '../lib/VoiceAgentTools';
 import { voiceEventEmitter } from '../lib/voiceEventEmitter';
 
 export default function Index() {
-  const { 
-    status, 
-    transcript, 
-    history, 
-    amplitude, 
-    startSession, 
-    stopSession 
+  const {
+    status,
+    transcript,
+    history,
+    amplitude,
+    startSession,
+    stopSession
   } = useVoiceSession(TOOL_HANDLERS);
 
   const [diseaseResult, setDiseaseResult] = useState(null);
@@ -49,23 +49,23 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBanner status={status} />
-      
+
       <View style={styles.transcriptContainer}>
         <TranscriptFeed history={history} transcript={transcript} />
       </View>
 
       <View style={styles.orbContainer}>
-        <VoiceOrb 
-          onPress={toggleSession} 
-          state={status} 
-          amplitude={amplitude} 
+        <VoiceOrb
+          onPress={toggleSession}
+          state={status}
+          amplitude={amplitude}
         />
       </View>
 
       {diseaseResult && (
-        <DiseaseCard 
-          disease={diseaseResult} 
-          onDismiss={() => setDiseaseResult(null)} 
+        <DiseaseCard
+          disease={diseaseResult}
+          onDismiss={() => setDiseaseResult(null)}
         />
       )}
     </SafeAreaView>

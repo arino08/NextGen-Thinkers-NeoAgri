@@ -63,23 +63,23 @@ export default function DiseaseCard({ disease, onDismiss }) {
       <TouchableWithoutFeedback onPress={dismissCard}>
         <View style={StyleSheet.absoluteFillObject} />
       </TouchableWithoutFeedback>
-      
-      <Animated.View 
+
+      <Animated.View
         style={[styles.card, { transform: [{ translateY: slideAnim }] }]}
         {...panResponder.panHandlers}
       >
         <View style={styles.handle} />
-        
+
         <Text style={styles.title}>{disease.name_hi}</Text>
-        
+
         <View style={[styles.badge, { backgroundColor: severityColor[disease.severity_hi] || COLORS.severityMedium }]}>
           <Text style={styles.badgeText}>{disease.severity_hi}</Text>
         </View>
-        
+
         <Text style={styles.cureText}>{disease.cure_hi}</Text>
-        
+
         <Text style={styles.confidenceText}>Confidence: {Math.round(disease.confidence * 100)}%</Text>
-        
+
         <TouchableOpacity style={styles.button} activeOpacity={0.8}>
           <Text style={styles.buttonText}>नेविगेट करें →</Text>
         </TouchableOpacity>

@@ -1,0 +1,42 @@
+{
+    "0": {
+        "name": "Caterpillar and Semilooper Pest Attack",
+        "name_hi": "इल्ली और सेमीलूपर कीट",
+        "severity": "High",
+        "severity_hi": "अधिक",
+        "cure": "Apply Chlorpyrifos 20EC @ 2ml/liter",
+        "cure_hi": "क्लोरपाइरीफ़ॉस 20EC 2ml प्रति लीटर पानी में डालें"
+    },
+    "1": {
+        "name": "Healthy Soyabean",
+        "name_hi": "स्वस्थ सोयाबीन",
+        "severity": "None",
+        "severity_hi": "कोई नहीं",
+        "cure": "No treatment needed",
+        "cure_hi": "कोई उपचार आवश्यक नहीं"
+    },
+    "2": {
+        "name": "Soyabean Frog Leaf Eye",
+        "name_hi": "सोयाबीन फ्रॉग आई",
+        "severity": "Medium",
+        "severity_hi": "मध्यम",
+        "cure": "Spray Mancozeb 2.5g/liter",
+        "cure_hi": "मैन्कोज़ेब 2.5g प्रति लीटर पानी में छिड़काव करें"
+    },
+    "3": {
+        "name": "Soyabean Spectoria Brown Spot",
+        "name_hi": "सोयाबीन भूरा धब्बा",
+        "severity": "Medium",
+        "severity_hi": "मध्यम",
+        "cure": "Apply Carbendazim 1g/liter",
+        "cure_hi": "कार्बेन्डाज़िम 1g प्रति लीटर पानी में डालें"
+    },
+    "4": {
+        "name": "Powdery Mildew",
+        "name_hi": "पाउडरी मिल्ड्यू",
+        "severity": "High",
+        "severity_hi": "अधिक",
+        "cure": "Apply sulfur-based treatments.",
+        "cure_hi": "सल्फर-आधारित उपचार लागू करें।"
+    }
+}

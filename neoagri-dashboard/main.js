@@ -1,8 +1,7 @@
-import * as ort from 'onnxruntime-web';
+import * as ort from '/node_modules/onnxruntime-web/dist/ort.wasm.bundle.min.mjs';
 
-// Point ONNX Runtime to the WASM files we copied into public/
-ort.env.wasm.wasmPaths = '/';
-ort.env.wasm.numThreads = 1; // avoid SharedArrayBuffer issues without COOP/COEP headers
+// Single-threaded to avoid SharedArrayBuffer / COOP-COEP issues
+ort.env.wasm.numThreads = 1;
 
 // ─── Config ───
 const API = 'https://neo-backend-production-bf9f.up.railway.app';
@@ -348,24 +347,50 @@ async function loadModel() {
   try {
     txt.textContent = 'Loading soybean UAV model...';
 
-    // Fetch model and external data file as ArrayBuffers
-    const [modelResponse, dataResponse] = await Promise.all([
-      fetch('/model/soybean_uav_modellll.onnx'),
-      fetch('/model/soybean_uav_modellll.onnx.data'),
-    ]);
+    // Try multiple loading strategies
+    let session = null;
 
-    if (!modelResponse.ok || !dataResponse.ok) throw new Error('Model file fetch failed');
+    // Strategy 1: URL string with externalData URL
+    try {
+      txt.textContent = 'Loading model (strategy 1)...';
+      session = await ort.InferenceSession.create('./model/soybean_uav_modellll.onnx', {
+        executionProviders: ['wasm'],
+        externalData: [
+          { path: 'soybean_uav_modellll.onnx.data', data: './model/soybean_uav_modellll.onnx.data' },
+        ],
+      });
+    } catch (err1) {
+      console.warn('[ONNX] Strategy 1 failed:', err1.message);
 
-    const modelBuf = await modelResponse.arrayBuffer();
-    const dataBuf = await dataResponse.arrayBuffer();
+      // Strategy 2: ArrayBuffer model + Uint8Array external data
+      try {
+        txt.textContent = 'Loading model (strategy 2)...';
+        const [modelBuf, dataBuf] = await Promise.all([
+          fetch('/model/soybean_uav_modellll.onnx').then(r => r.arrayBuffer()),
+          fetch('/model/soybean_uav_modellll.onnx.data').then(r => r.arrayBuffer()),
+        ]);
+        session = await ort.InferenceSession.create(new Uint8Array(modelBuf), {
+          executionProviders: ['wasm'],
+          externalData: [
+            { path: 'soybean_uav_modellll.onnx.data', data: new Uint8Array(dataBuf) },
+          ],
+        });
+      } catch (err2) {
+        console.warn('[ONNX] Strategy 2 failed:', err2.message);
 
-    // Pass external data as Uint8Array for maximum compat
-    onnxSession = await ort.InferenceSession.create(new Uint8Array(modelBuf), {
-      executionProviders: ['wasm'],
-      externalData: [
-        { path: 'soybean_uav_modellll.onnx.data', data: new Uint8Array(dataBuf) },
-      ],
-    });
+        // Strategy 3: Just the URL (for models without external data issue)
+        try {
+          txt.textContent = 'Loading model (strategy 3)...';
+          session = await ort.InferenceSession.create('./model/soybean_uav_modellll.onnx', {
+            executionProviders: ['wasm'],
+          });
+        } catch (err3) {
+          throw new Error(`All strategies failed: ${err1.message} | ${err2.message} | ${err3.message}`);
+        }
+      }
+    }
+
+    onnxSession = session;
 
     dot.className = 'model-dot loaded';
     txt.textContent = 'AI Model ready — soybean_uav';

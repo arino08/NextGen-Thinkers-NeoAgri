@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeoAgri — Drone Command Center</title>
+  <meta name="description" content="NeoAgri drone operator dashboard for dispatching UAV crop scanning missions and AI disease detection." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Left sidebar: Drone requests -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">🌱</span>
+          <div>
+            <h1>NeoAgri</h1>
+            <span class="logo-sub">Drone Command Center</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="stats-strip">
+        <div class="mini-stat pending-stat">
+          <span class="mini-stat-val" id="statPending">0</span>
+          <span class="mini-stat-label">Pending</span>
+        </div>
+        <div class="mini-stat active-stat">
+          <span class="mini-stat-val" id="statDispatched">0</span>
+          <span class="mini-stat-label">Active</span>
+        </div>
+        <div class="mini-stat done-stat">
+          <span class="mini-stat-val" id="statCompleted">0</span>
+          <span class="mini-stat-label">Done</span>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="dispatched">Active</button>
+        <button class="filter-btn" data-filter="completed">Done</button>
+      </div>
+
+      <!-- Bookings list -->
+      <div class="bookings-list" id="bookingsList">
+        <div class="empty-state">
+          <span>🛸</span>
+          <p>No bookings yet</p>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="conn-status" id="connStatus">
+          <span class="conn-dot"></span>
+          <span>Connecting...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center: Map -->
+    <main id="center">
+      <div id="map"></div>
+      <!-- Floating drone simulation overlay -->
+      <div class="map-overlay" id="droneOverlay" style="display:none">
+        <div class="drone-sim">
+          <span class="drone-emoji">🛸</span>
+          <div class="drone-sim-info">
+            <h4 id="droneSimTitle">Drone Dispatched</h4>
+            <p id="droneSimDetail">Scanning in progress...</p>
+            <div class="drone-progress">
+              <div class="drone-progress-bar" id="droneProgressBar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right panel: Analysis results -->
+    <aside id="rightPanel">
+      <div class="panel-header">
+        <h2>🔬 AI Analysis</h2>
+        <p class="panel-desc">Upload drone images or complete a mission to see results</p>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <span>📷</span>
+        <p>Drop drone images here</p>
+        <small>or click to browse</small>
+        <input type="file" id="imageInput" accept="image/*" multiple hidden />
+      </div>
+
+      <!-- Model status -->
+      <div class="model-status" id="modelStatus">
+        <span class="model-dot"></span>
+        <span>Loading AI model...</span>
+      </div>
+
+      <!-- Results -->
+      <div class="results-area" id="resultsArea">
+        <!-- Scan results appear here -->
+      </div>
+
+      <!-- Legend -->
+      <div class="legend">
+        <h4>Disease Legend</h4>
+        <div class="legend-item"><span class="legend-dot" style="background:#ff4d4d"></span> Bacterial Pustule (High)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ffa500"></span> Frogeye Leaf Spot (Medium)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#00c896"></span> Healthy</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ff4d4d"></span> Rust (High)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ff4d4d"></span> Sudden Death Syndrome (High)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#e8a020"></span> Target Leaf Spot (Medium)</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ff4d4d"></span> Yellow Mosaic (High)</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

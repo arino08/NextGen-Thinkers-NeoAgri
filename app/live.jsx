@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
 import { runOnJS } from 'react-native-worklets-core';
-import { resize } from 'react-native-vision-camera-resize-plugin';
+import { resize } from 'vision-camera-resize-plugin';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../lib/voiceStyles';
 import { useRouter } from 'expo-router';
@@ -25,25 +25,29 @@ export default function LiveCameraScreen() {
     return () => voiceEventEmitter.off('DISEASE_RESULT', handler);
   }, []);
 
-  const model = useTensorflowModel(require('../models/neoagri_app_model.tflite'));
+  const model = useTensorflowModel(require('../models/soybean_model.tflite'));
 
   const handleDetection = (labelIndex, confidence) => {
     try {
       const labels = require('../models/disease_labels.json');
       const label = labels[String(labelIndex)];
-      if (label) {
+      if (label && labelIndex !== 1) { // Skip healthy (index 1)
+        const captureId = `scan-${Date.now()}-${labelIndex}`;
         saveScan({
+          capture_id: captureId,
           disease: label.name,
           label_index: labelIndex,
           confidence,
           timestamp: new Date().toISOString()
         });
 
-        // As a fallback since saveScan is mocked currently, we'll also emit manually so UI updates
         voiceEventEmitter.emit('DISEASE_RESULT', {
             name: label.name,
+            name_hi: label.name_hi,
             severity: label.severity,
+            severity_hi: label.severity_hi,
             cure: label.cure,
+            cure_hi: label.cure_hi,
             confidence
         });
       }
@@ -59,7 +63,7 @@ export default function LiveCameraScreen() {
     const output = model.model.runSync([resized]);
     const scores = output[0];
     const maxIdx = scores.indexOf(Math.max(...scores));
-    if (scores[maxIdx] > 0.75) {
+    if (scores[maxIdx] > 0.5) {
       runOnJS(handleDetection)(maxIdx, scores[maxIdx]);
     }
   }, [model]);

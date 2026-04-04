@@ -47,15 +47,15 @@ export default function RadarScreen() {
       if (status !== 'granted') return;
 
       const markers = await getOfflineMarkers();
-      const tgt = markers.find(m => m.id === markerId) || markers[0];
+      const tgt = markers.find(m => String(m.capture_id) === String(markerId)) || markers[0];
       setTarget(tgt);
 
       const posSub = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 1000, distanceInterval: 1 },
         (loc) => {
           if (!tgt) return;
-          const dist = getDistance(loc.coords.latitude, loc.coords.longitude, tgt.lat, tgt.lng);
-          const brg = getBearing(loc.coords.latitude, loc.coords.longitude, tgt.lat, tgt.lng);
+          const dist = getDistance(loc.coords.latitude, loc.coords.longitude, tgt.latitude, tgt.longitude);
+          const brg = getBearing(loc.coords.latitude, loc.coords.longitude, tgt.latitude, tgt.longitude);
           setDistance(dist);
           setBearing(brg);
         }

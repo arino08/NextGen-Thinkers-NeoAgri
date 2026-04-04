@@ -19,10 +19,14 @@ export async function insertScan(scan) {
   ]);
 
   if (scan.label_index !== undefined && diseaseLabels[scan.label_index]) {
+    const label = diseaseLabels[scan.label_index];
     voiceEventEmitter.emit('DISEASE_RESULT', {
-      disease: scan.disease,
-      severity: diseaseLabels[scan.label_index].severity_hi,
-      cure_hi: diseaseLabels[scan.label_index].cure_hi,
+      name: label.name,
+      name_hi: label.name_hi,
+      severity: label.severity,
+      severity_hi: label.severity_hi,
+      cure: label.cure,
+      cure_hi: label.cure_hi,
       confidence: scan.confidence
     });
   }

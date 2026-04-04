@@ -1,5 +1,9 @@
 import * as ort from 'onnxruntime-web';
 
+// Point ONNX Runtime to the WASM files we copied into public/
+ort.env.wasm.wasmPaths = '/';
+ort.env.wasm.numThreads = 1; // avoid SharedArrayBuffer issues without COOP/COEP headers
+
 // ─── Config ───
 const API = 'https://neo-backend-production-bf9f.up.railway.app';
 const MAP_CENTER = [23.2156, 77.4565]; // Bhopal area — soybean belt
@@ -344,12 +348,23 @@ async function loadModel() {
   try {
     txt.textContent = 'Loading soybean UAV model...';
 
-    // Configure ONNX Runtime to use WASM backend
-    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/';
+    // Fetch model and external data file as ArrayBuffers
+    const [modelResponse, dataResponse] = await Promise.all([
+      fetch('/model/soybean_uav_modellll.onnx'),
+      fetch('/model/soybean_uav_modellll.onnx.data'),
+    ]);
 
-    onnxSession = await ort.InferenceSession.create('/model/soybean_uav_modellll.onnx', {
+    if (!modelResponse.ok || !dataResponse.ok) throw new Error('Model file fetch failed');
+
+    const modelBuf = await modelResponse.arrayBuffer();
+    const dataBuf = await dataResponse.arrayBuffer();
+
+    // Pass external data as Uint8Array for maximum compat
+    onnxSession = await ort.InferenceSession.create(new Uint8Array(modelBuf), {
       executionProviders: ['wasm'],
-      graphOptimizationLevel: 'all',
+      externalData: [
+        { path: 'soybean_uav_modellll.onnx.data', data: new Uint8Array(dataBuf) },
+      ],
     });
 
     dot.className = 'model-dot loaded';

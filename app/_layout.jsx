@@ -12,7 +12,7 @@ import { voiceEventEmitter } from '../lib/voiceEventEmitter';
 
 registerGlobals();
 
-const SYNC_INTERVAL_MS = 30000; // 30 seconds
+const SYNC_INTERVAL_MS = 10000; // 10 seconds
 
 const DEMO_MARKERS = [
   {
@@ -101,6 +101,7 @@ export default function Layout() {
 
     async function checkForNewMarkers() {
       try {
+        console.log('[SYNC] Checking for new markers...');
         await syncPendingScans();
         const markers = await getAllMarkers();
         const newCount = markers.length;

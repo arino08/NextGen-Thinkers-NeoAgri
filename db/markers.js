@@ -2,7 +2,7 @@ import { db } from './schema';
 
 export async function insertMarker(marker) {
   const query = `
-    INSERT OR REPLACE INTO drone_markers (capture_id, latitude, longitude, disease, confidence, timestamp, synced)
+    INSERT OR IGNORE INTO drone_markers (capture_id, latitude, longitude, disease, confidence, timestamp, synced)
     VALUES (?, ?, ?, ?, ?, ?, ?);
   `;
   await db.runAsync(query, [
@@ -11,7 +11,7 @@ export async function insertMarker(marker) {
     marker.longitude,
     marker.disease,
     marker.confidence,
-    marker.timestamp,
+    marker.timestamp || marker.created_at || new Date().toISOString(),
     marker.synced !== undefined ? marker.synced : 1
   ]);
 }

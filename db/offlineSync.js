@@ -58,8 +58,11 @@ export async function syncPendingScans() {
     const markersRes = await fetch(`${API_URL}/markers`);
     if (markersRes.ok) {
       const markersData = await markersRes.json();
-      if (markersData && markersData.data && Array.isArray(markersData.data)) {
-        for (const m of markersData.data) {
+      // Backend returns raw array OR { data: [...] }
+      const markersList = Array.isArray(markersData) ? markersData : (markersData?.data || []);
+      if (markersList.length > 0) {
+        console.log(`[SYNC] Fetched ${markersList.length} markers from server`);
+        for (const m of markersList) {
           await insertMarker(m);
         }
       }

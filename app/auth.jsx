@@ -15,6 +15,7 @@ const API = process.env.EXPO_PUBLIC_API_URL;
 
 // ─── Step 1: Phone Entry ────────────────────────────────────────────────────
 function PhoneStep({ onNext }) {
+  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -30,10 +31,11 @@ function PhoneStep({ onNext }) {
       const res = await fetch(`${API}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone }),
+        body: JSON.stringify({ phone: fullPhone, name: name.trim() || null }),
       });
       const data = await res.json();
       if (res.ok) {
+        if (name.trim()) await AsyncStorage.setItem('farmer_name', name.trim());
         onNext(fullPhone);
       } else {
         Alert.alert('Error', data.error || 'OTP नहीं भेजा जा सका।');
@@ -49,6 +51,15 @@ function PhoneStep({ onNext }) {
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.step}>
       <Text style={styles.title}>NeoAgri</Text>
       <Text style={styles.subtitle}>किसान खाते में लॉगिन करें</Text>
+
+      <TextInput
+        style={styles.nameInput}
+        placeholder="आपका नाम (वैकल्पिक)"
+        placeholderTextColor={COLORS.textSecondary}
+        value={name}
+        onChangeText={setName}
+        autoCapitalize="words"
+      />
 
       <View style={styles.phoneRow}>
         <View style={styles.countryCode}>
@@ -380,6 +391,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 40,
     lineHeight: 22,
+  },
+  nameInput: {
+    width: '100%',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    marginBottom: 12,
   },
   phoneRow: {
     flexDirection: 'row',

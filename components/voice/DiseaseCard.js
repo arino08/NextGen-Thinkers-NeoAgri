@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Dimensions, PanResponder, TouchableWithoutFeedback } from 'react-native';
+import { useRouter } from 'expo-router';
 import { COLORS, FONTS } from '../../lib/voiceStyles';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -11,6 +12,7 @@ const severityColor = {
 };
 
 export default function DiseaseCard({ disease, onDismiss }) {
+  const router = useRouter();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
@@ -80,7 +82,14 @@ export default function DiseaseCard({ disease, onDismiss }) {
 
         <Text style={styles.confidenceText}>Confidence: {Math.round(disease.confidence * 100)}%</Text>
 
-        <TouchableOpacity style={styles.button} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.8}
+          onPress={() => {
+            dismissCard();
+            router.push('/radar');
+          }}
+        >
           <Text style={styles.buttonText}>नेविगेट करें →</Text>
         </TouchableOpacity>
       </Animated.View>

@@ -48,8 +48,15 @@ const DEMO_FEATURES = [
     action: 'scan_nearby_markers',
   },
   {
-    id: 'report',
+    id: 'stats',
     icon: '📊',
+    title: 'Impact Stats',
+    subtitle: 'प्रभाव रिपोर्ट — savings, diseases caught',
+    route: '/stats',
+  },
+  {
+    id: 'report',
+    icon: '🔄',
     title: 'App Status',
     subtitle: 'Cached markers & pending syncs',
     action: 'report_status',

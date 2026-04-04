@@ -1,13 +1,18 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, AppState } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { registerGlobals } from 'react-native-webrtc';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Speech from 'expo-speech';
 import { initDB } from '../db/offlineSync';
 import { insertMarker, getAllMarkers } from '../db/markers';
+import { syncPendingScans } from '../db/offlineSync';
 import { hasFarmerProfile } from '../db/farmer';
+import { voiceEventEmitter } from '../lib/voiceEventEmitter';
 
 registerGlobals();
+
+const SYNC_INTERVAL_MS = 30000; // 30 seconds
 
 const DEMO_MARKERS = [
   {
@@ -39,28 +44,40 @@ const DEMO_MARKERS = [
   },
 ];
 
+// Disease name to Hindi mapping for voice alerts
+const DISEASE_HINDI = {
+  'Bacterial Pustule': 'बैक्टीरियल पस्ट्यूल',
+  'Frogeye Leaf Spot': 'फ्रॉगआई लीफ स्पॉट',
+  'Rust': 'रस्ट',
+  'Sudden Death Syndrome': 'सडन डेथ सिंड्रोम',
+  'Target Leaf Spot': 'टारगेट लीफ स्पॉट',
+  'Yellow Mosaic': 'यलो मोज़ेक',
+};
+
 export default function Layout() {
   const [dbReady, setDbReady] = useState(false);
+  const markerCountRef = useRef(0);
+  const syncTimerRef = useRef(null);
 
   useEffect(() => {
     (async () => {
       try {
         await initDB();
 
-        // Seed demo markers if DB is empty
         const existing = await getAllMarkers();
         if (existing.length === 0) {
           for (const marker of DEMO_MARKERS) {
             await insertMarker(marker);
           }
+          markerCountRef.current = DEMO_MARKERS.length;
+        } else {
+          markerCountRef.current = existing.length;
         }
 
-        // Auth check: need both a stored token AND a PIN set up
         const token = await AsyncStorage.getItem('auth_token');
         const pinSetup = await hasFarmerProfile();
 
         if (!token || !pinSetup) {
-          // Will redirect after dbReady renders the Stack
           setDbReady(true);
           router.replace('/auth');
           return;
@@ -71,6 +88,51 @@ export default function Layout() {
       setDbReady(true);
     })();
   }, []);
+
+  // Background sync + voice alert for new drone results
+  useEffect(() => {
+    if (!dbReady) return;
+
+    async function checkForNewMarkers() {
+      try {
+        await syncPendingScans();
+        const markers = await getAllMarkers();
+        const newCount = markers.length;
+        const diff = newCount - markerCountRef.current;
+
+        if (diff > 0) {
+          // Find the newest markers (last `diff` entries)
+          const newMarkers = markers.slice(-diff);
+          const diseases = [...new Set(newMarkers.map(m => m.disease).filter(d => d && d !== 'Healthy'))];
+
+          if (diseases.length > 0) {
+            const hindiNames = diseases.map(d => DISEASE_HINDI[d] || d).join(', ');
+            const msg = diseases.length === 1
+              ? `ड्रोन रिजल्ट आया! आपके खेत में ${hindiNames} बीमारी मिली है। नेविगेट करने के लिए बोलें।`
+              : `ड्रोन रिजल्ट आया! ${diseases.length} बीमारियाँ मिलीं: ${hindiNames}। विस्तार से जानने के लिए बोलें।`;
+
+            Speech.speak(msg, { language: 'hi-IN', rate: 0.9 });
+            voiceEventEmitter.emit('DRONE_ALERT', { newMarkers, diseases });
+          }
+        }
+        markerCountRef.current = newCount;
+      } catch (err) {
+        // Silent fail — offline is expected
+      }
+    }
+
+    syncTimerRef.current = setInterval(checkForNewMarkers, SYNC_INTERVAL_MS);
+
+    // Also sync when app comes to foreground
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkForNewMarkers();
+    });
+
+    return () => {
+      if (syncTimerRef.current) clearInterval(syncTimerRef.current);
+      sub.remove();
+    };
+  }, [dbReady]);
 
   if (!dbReady) {
     return (

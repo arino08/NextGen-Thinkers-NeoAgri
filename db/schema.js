@@ -31,6 +31,20 @@ export async function initDB() {
       started_at TEXT,
       commands_count INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS farmer_profile (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      phone TEXT,
+      pin_hash TEXT NOT NULL,
+      failed_attempts INTEGER DEFAULT 0,
+      locked_until TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS booking_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      booking_id TEXT,
+      booked_at TEXT DEFAULT (datetime('now'))
+    );
   `);
 }
 export { db };

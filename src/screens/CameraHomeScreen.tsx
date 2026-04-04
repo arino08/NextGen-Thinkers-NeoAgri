@@ -31,7 +31,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'MainHub'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'SwipeHub'>;
 };
 
 const { width: SCREEN_W } = Dimensions.get('window');

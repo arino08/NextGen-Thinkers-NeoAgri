@@ -16,7 +16,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "NeoAgri needs camera access to scan your crops for disease detection.",
         "NSPhotoLibraryUsageDescription": "NeoAgri needs access to your photo library to import crop images.",
-        "NSMicrophoneUsageDescription": "NeoAgri needs microphone access for voice commands."
+        "NSMicrophoneUsageDescription": "NeoAgri needs microphone access for voice commands.",
+        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition."
       }
     },
     "android": {
@@ -29,8 +30,16 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_IMAGES"
-      ]
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.anonymous.neoagri"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,7 +51,8 @@
         {
           "photosPermission": "NeoAgri needs access to your photos to import crop images."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

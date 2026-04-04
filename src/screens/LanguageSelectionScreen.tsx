@@ -23,7 +23,7 @@ export default function LanguageSelectionScreen({ navigation }: Props) {
 
   const selectLanguage = (lang: string) => {
     changeLanguage(lang);
-    navigation.replace('MainHub');
+    navigation.replace('Home');
   };
 
   if (!isReady) {

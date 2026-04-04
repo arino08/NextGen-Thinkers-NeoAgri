@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { registerGlobals } from 'react-native-webrtc';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initDB } from '../db/offlineSync';
-import { insertMarker } from '../db/markers';
-import { getAllMarkers } from '../db/markers';
+import { insertMarker, getAllMarkers } from '../db/markers';
+import { hasFarmerProfile } from '../db/farmer';
 
 registerGlobals();
 
-// Demo seed data — ensures radar and marker features always have data to show
 const DEMO_MARKERS = [
   {
     capture_id: 'demo-marker-001',
@@ -46,13 +46,24 @@ export default function Layout() {
     (async () => {
       try {
         await initDB();
+
         // Seed demo markers if DB is empty
         const existing = await getAllMarkers();
         if (existing.length === 0) {
           for (const marker of DEMO_MARKERS) {
             await insertMarker(marker);
           }
-          console.log('Demo markers seeded successfully');
+        }
+
+        // Auth check: need both a stored token AND a PIN set up
+        const token = await AsyncStorage.getItem('auth_token');
+        const pinSetup = await hasFarmerProfile();
+
+        if (!token || !pinSetup) {
+          // Will redirect after dbReady renders the Stack
+          setDbReady(true);
+          router.replace('/auth');
+          return;
         }
       } catch (err) {
         console.error('DB init error:', err);

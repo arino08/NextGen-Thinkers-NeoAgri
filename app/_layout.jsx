@@ -144,7 +144,10 @@ export default function Layout() {
   if (!dbReady) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashText}>NeoAgri लोड हो रहा है...</Text>
+        <View style={styles.splashLeaf}>
+          <View style={styles.splashLeafShape} />
+        </View>
+        <Text style={styles.splashTitle}>NeoAgri</Text>
       </View>
     );
   }
@@ -155,13 +158,26 @@ export default function Layout() {
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    backgroundColor: '#080C0A',
+    backgroundColor: '#060A08',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  splashText: {
-    color: '#00C896',
-    fontSize: 20,
-    fontWeight: '600',
+  splashLeaf: {
+    marginBottom: 16,
+  },
+  splashLeafShape: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderTopRightRadius: 2,
+    borderBottomLeftRadius: 2,
+    backgroundColor: '#00C896',
+    transform: [{ rotate: '-45deg' }],
+  },
+  splashTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 1.5,
   },
 });

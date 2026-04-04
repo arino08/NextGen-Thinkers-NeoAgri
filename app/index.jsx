@@ -82,12 +82,12 @@ export default function Index() {
 
   const blobState = sessionActive ? status : 'idle';
   const statusLabel = {
-    idle: 'Hold to speak',
-    listening: 'Listening...',
-    processing: 'Thinking...',
-    speaking: 'Speaking...',
-    connecting: 'Connecting...',
-    offline: 'Offline',
+    idle: 'बोलने के लिए दबाएं',
+    listening: 'सुन रहा हूँ...',
+    processing: 'सोच रहा हूँ...',
+    speaking: 'बोल रहा हूँ...',
+    connecting: 'जुड़ रहा है...',
+    offline: 'ऑफ़लाइन',
   }[status] || '';
 
   return (

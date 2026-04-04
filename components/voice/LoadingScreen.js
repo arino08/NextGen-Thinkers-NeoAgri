@@ -1,77 +1,135 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { COLORS, FONTS } from '../../lib/voiceStyles';
+import { View, Text, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
+
+const { width: SCREEN_W } = Dimensions.get('window');
 
 export default function LoadingScreen() {
-  const pulseAnim = useRef(new Animated.Value(0.6)).current;
-  const dotAnim = useRef(new Animated.Value(0)).current;
   const fadeIn = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.8)).current;
+  const barWidth = useRef(new Animated.Value(0)).current;
+  const dotOpacity1 = useRef(new Animated.Value(0.2)).current;
+  const dotOpacity2 = useRef(new Animated.Value(0.2)).current;
+  const dotOpacity3 = useRef(new Animated.Value(0.2)).current;
+  const glowScale = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
-    // Fade in
-    Animated.timing(fadeIn, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
+    // Entrance
+    Animated.parallel([
+      Animated.timing(fadeIn, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScale, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-    // Logo pulse
-    const pulse = Animated.loop(
+    // Glow breathe
+    const glow = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
+        Animated.timing(glowScale, {
           toValue: 1,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
+          duration: 2000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.6,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
+        Animated.timing(glowScale, {
+          toValue: 0.5,
+          duration: 2000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
     );
-    pulse.start();
+    glow.start();
 
-    // Dots animation
+    // Loading bar
+    const bar = Animated.loop(
+      Animated.sequence([
+        Animated.timing(barWidth, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: false,
+        }),
+        Animated.timing(barWidth, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    bar.start();
+
+    // Dots cascade
     const dots = Animated.loop(
-      Animated.timing(dotAnim, {
-        toValue: 3,
-        duration: 1500,
-        easing: Easing.linear,
-        useNativeDriver: false,
-      })
+      Animated.stagger(250, [
+        Animated.sequence([
+          Animated.timing(dotOpacity1, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(dotOpacity1, { toValue: 0.2, duration: 300, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(dotOpacity2, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(dotOpacity2, { toValue: 0.2, duration: 300, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(dotOpacity3, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(dotOpacity3, { toValue: 0.2, duration: 300, useNativeDriver: true }),
+        ]),
+      ])
     );
     dots.start();
 
     return () => {
-      pulse.stop();
+      glow.stop();
+      bar.stop();
       dots.stop();
     };
   }, []);
 
+  const barWidthInterp = barWidth.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0%', '100%'],
+  });
+
   return (
     <Animated.View style={[styles.container, { opacity: fadeIn }]}>
-      {/* Glow background */}
-      <View style={styles.glowOuter} />
-      <View style={styles.glowInner} />
+      {/* Subtle radial glow behind logo */}
+      <Animated.View style={[styles.glow, {
+        transform: [{ scale: glowScale }],
+        opacity: 0.6,
+      }]} />
 
       {/* Logo */}
-      <Animated.View style={[styles.logoContainer, { opacity: pulseAnim }]}>
-        <Text style={styles.logoEmoji}>🌱</Text>
+      <Animated.View style={[styles.logoArea, { transform: [{ scale: logoScale }] }]}>
+        {/* Leaf icon — clean geometric */}
+        <View style={styles.leafIcon}>
+          <View style={styles.leafShape} />
+          <View style={styles.leafStem} />
+        </View>
+
         <Text style={styles.logoText}>NeoAgri</Text>
-        <Text style={styles.logoSubtext}>AI Voice Agent</Text>
+        <Text style={styles.tagline}>AI-Powered Crop Protection</Text>
       </Animated.View>
 
-      {/* Loading bar */}
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingBar}>
-          <Animated.View style={[styles.loadingBarFill, {
-            opacity: pulseAnim,
-          }]} />
+      {/* Loading indicator */}
+      <View style={styles.loadingArea}>
+        <View style={styles.barTrack}>
+          <Animated.View style={[styles.barFill, { width: barWidthInterp }]} />
         </View>
-        <Text style={styles.loadingText}>Connecting to AI agent...</Text>
+
+        <View style={styles.dotsRow}>
+          <Animated.View style={[styles.dot, { opacity: dotOpacity1 }]} />
+          <Animated.View style={[styles.dot, { opacity: dotOpacity2 }]} />
+          <Animated.View style={[styles.dot, { opacity: dotOpacity3 }]} />
+        </View>
+
+        <Text style={styles.loadingText}>Connecting</Text>
       </View>
     </Animated.View>
   );
@@ -80,66 +138,93 @@ export default function LoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.bg,
+    backgroundColor: '#060A08',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 100,
   },
-  glowOuter: {
+  glow: {
     position: 'absolute',
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    backgroundColor: 'rgba(0, 200, 150, 0.05)',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(0,200,150,0.06)',
   },
-  glowInner: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(0, 200, 150, 0.08)',
-  },
-  logoContainer: {
+  logoArea: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 80,
   },
-  logoEmoji: {
-    fontSize: 72,
-    marginBottom: 16,
+  leafIcon: {
+    width: 48,
+    height: 48,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leafShape: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderTopRightRadius: 2,
+    borderBottomLeftRadius: 2,
+    backgroundColor: '#00C896',
+    transform: [{ rotate: '-45deg' }],
+  },
+  leafStem: {
+    position: 'absolute',
+    bottom: 6,
+    width: 2,
+    height: 18,
+    backgroundColor: '#00C896',
+    opacity: 0.6,
+    borderRadius: 1,
   },
   logoText: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: COLORS.orbTeal,
-    letterSpacing: 2,
+    fontSize: 34,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
   },
-  logoSubtext: {
-    ...FONTS.hindiSmall,
-    color: '#666',
-    marginTop: 8,
-    fontSize: 15,
+  tagline: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#5A6B60',
+    marginTop: 6,
     letterSpacing: 1,
   },
-  loadingContainer: {
+  loadingArea: {
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 100,
   },
-  loadingBar: {
-    width: 200,
-    height: 3,
-    backgroundColor: '#1a2a20',
-    borderRadius: 2,
+  barTrack: {
+    width: 120,
+    height: 2,
+    backgroundColor: '#1A2A20',
+    borderRadius: 1,
     overflow: 'hidden',
     marginBottom: 16,
   },
-  loadingBarFill: {
-    width: '100%',
+  barFill: {
     height: '100%',
-    backgroundColor: COLORS.orbTeal,
+    backgroundColor: '#00C896',
+    borderRadius: 1,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  dot: {
+    width: 4,
+    height: 4,
     borderRadius: 2,
+    backgroundColor: '#00C896',
   },
   loadingText: {
-    ...FONTS.hindiSmall,
-    color: '#555',
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#3A4A40',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
 });

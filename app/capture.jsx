@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, AppState } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
 import { useResizePlugin } from 'vision-camera-resize-plugin';
@@ -13,6 +13,7 @@ import { saveScan } from '../db/offlineSync';
 import { voiceEventEmitter } from '../lib/voiceEventEmitter';
 import DiseaseCard from '../components/voice/DiseaseCard';
 import diseaseLabels from '../models/disease_labels.json';
+import { useIsFocused } from '@react-navigation/native';
 
 export default function CaptureScreen() {
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -20,10 +21,19 @@ export default function CaptureScreen() {
   const router = useRouter();
   const cameraRef = useRef(null);
   const { resize } = useResizePlugin();
+  const isFocused = useIsFocused();
+  const [appActive, setAppActive] = useState(true);
 
   const [diseaseResult, setDiseaseResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [captured, setCaptured] = useState(false);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setAppActive(state === 'active');
+    });
+    return () => sub.remove();
+  }, []);
 
   const model = useTensorflowModel(require('../models/soyabean_model_v2.tflite'));
 
@@ -112,7 +122,7 @@ export default function CaptureScreen() {
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={!diseaseResult}
+        isActive={isFocused && appActive && !diseaseResult}
         photo={true}
         frameProcessor={captured && !diseaseResult ? frameProcessor : undefined}
       />

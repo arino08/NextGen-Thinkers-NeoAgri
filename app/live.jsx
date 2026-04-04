@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, AppState } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
 import { Worklets } from 'react-native-worklets-core';
@@ -19,15 +19,29 @@ const SEVERITY_COLORS = {
   medium: '#FFA500',
   none: '#00C896',
 };
+import { useIsFocused } from '@react-navigation/native';
 
 export default function LiveCameraScreen() {
   const { hasPermission, requestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const router = useRouter();
+  const isFocused = useIsFocused();
+  const [appActive, setAppActive] = useState(true);
   const [diseaseResult, setDiseaseResult] = useState(null);
-  const [liveDetection, setLiveDetection] = useState(null); // { name, name_hi, severity, confidence }
+  const [liveDetection, setLiveDetection] = useState(null);
   const { resize } = useResizePlugin();
   const lastDetectionTime = useRef(0);
+  const lastSpeechTime = useRef(0);
+  const lastSpokenDisease = useRef('');
+  const lastSaveTime = useRef(0);
+
+  // Track app state to deactivate camera in background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      setAppActive(state === 'active');
+    });
+    return () => sub.remove();
+  }, []);
 
   // Animated values for the bounding box overlay
   const boxOpacity = useRef(new Animated.Value(0)).current;
@@ -81,8 +95,8 @@ export default function LiveCameraScreen() {
   const handleDetection = useCallback((labelIndex, confidence) => {
     try {
       const now = Date.now();
-      // Throttle: at most once per second for the overlay
-      if (now - lastDetectionTime.current < 1000) return;
+      // Throttle overlay: at most once per 1.5 seconds
+      if (now - lastDetectionTime.current < 1500) return;
       lastDetectionTime.current = now;
 
       const label = diseaseLabels[String(labelIndex)];
@@ -99,14 +113,18 @@ export default function LiveCameraScreen() {
       });
 
       if (labelIndex !== 2) {
-        const captureId = `scan-${Date.now()}-${labelIndex}`;
-        saveScan({
-          capture_id: captureId,
-          disease: label.name,
-          label_index: labelIndex,
-          confidence,
-          timestamp: new Date().toISOString()
-        });
+        // Save at most once per 10 seconds to avoid DB spam
+        if (now - lastSaveTime.current > 10000) {
+          lastSaveTime.current = now;
+          const captureId = `scan-${Date.now()}-${labelIndex}`;
+          saveScan({
+            capture_id: captureId,
+            disease: label.name,
+            label_index: labelIndex,
+            confidence,
+            timestamp: new Date().toISOString()
+          });
+        }
 
         voiceEventEmitter.emit('DISEASE_RESULT', {
           name: label.name,
@@ -118,8 +136,12 @@ export default function LiveCameraScreen() {
           confidence
         });
 
-        // Speak once for significant detections
-        if (confidence > 0.7) {
+        // Speak only on high confidence, 5s cooldown, and different disease than last spoken
+        const isDifferentDisease = label.name !== lastSpokenDisease.current;
+        const cooldownElapsed = now - lastSpeechTime.current > 5000;
+        if (confidence > 0.75 && cooldownElapsed && isDifferentDisease) {
+          lastSpeechTime.current = now;
+          lastSpokenDisease.current = label.name;
           Speech.speak(`${label.name_hi} बीमारी मिली`, { language: 'hi-IN' });
         }
       }
@@ -141,7 +163,7 @@ export default function LiveCameraScreen() {
     for (let i = 1; i < scores.length; i++) {
       if (scores[i] > maxVal) { maxVal = scores[i]; maxIdx = i; }
     }
-    if (maxVal > 0.4) {
+    if (maxVal > 0.45) {
       handleDetectionJS(maxIdx, maxVal);
     }
   }, [model, resize, handleDetectionJS]);
@@ -181,7 +203,7 @@ export default function LiveCameraScreen() {
       <Camera
         style={StyleSheet.absoluteFill}
         device={device}
-        isActive={true}
+        isActive={isFocused && appActive}
         frameProcessor={frameProcessor}
       />
 

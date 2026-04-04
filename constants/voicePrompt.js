@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AsyncStorage } from 'expo-sqlite/kv-store';
 
 const BASE_PROMPT = `
 You are NeoAgri, a friendly AI voice assistant for Indian soybean farmers.

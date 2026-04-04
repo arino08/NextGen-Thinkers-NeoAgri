@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import { COLORS, FONTS } from '../lib/voiceStyles';
 import PinPad from '../components/auth/PinPad';
 import { setupFarmerPin } from '../db/farmer';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AsyncStorage } from 'expo-sqlite/kv-store';
 
 const API = process.env.EXPO_PUBLIC_API_URL;
 

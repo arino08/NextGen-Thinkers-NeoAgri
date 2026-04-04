@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, AppState } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { registerGlobals } from 'react-native-webrtc';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AsyncStorage } from 'expo-sqlite/kv-store';
 import * as Speech from 'expo-speech';
 import { initDB } from '../db/offlineSync';
 import { insertMarker, getAllMarkers } from '../db/markers';
@@ -56,6 +56,7 @@ const DISEASE_HINDI = {
 
 export default function Layout() {
   const [dbReady, setDbReady] = useState(false);
+  const [needsAuth, setNeedsAuth] = useState(false);
   const markerCountRef = useRef(0);
   const syncTimerRef = useRef(null);
 
@@ -78,9 +79,7 @@ export default function Layout() {
         const pinSetup = await hasFarmerProfile();
 
         if (!token || !pinSetup) {
-          setDbReady(true);
-          router.replace('/auth');
-          return;
+          setNeedsAuth(true);
         }
       } catch (err) {
         console.error('DB init error:', err);
@@ -88,6 +87,13 @@ export default function Layout() {
       setDbReady(true);
     })();
   }, []);
+
+  // Navigate to auth AFTER the Stack has mounted
+  useEffect(() => {
+    if (dbReady && needsAuth) {
+      router.replace('/auth');
+    }
+  }, [dbReady, needsAuth]);
 
   // Background sync + voice alert for new drone results
   useEffect(() => {

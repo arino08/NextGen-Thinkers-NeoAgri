@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCameraPermission, useCameraDevice, Camera, useFrameProcessor } from 'react-native-vision-camera';
 import { useTensorflowModel } from 'react-native-fast-tflite';
-import { runOnJS } from 'react-native-worklets-core';
-import { resize } from 'vision-camera-resize-plugin';
+import { Worklets } from 'react-native-worklets-core';
+import { useResizePlugin } from 'vision-camera-resize-plugin';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '../lib/voiceStyles';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,7 @@ export default function LiveCameraScreen() {
   const device = useCameraDevice('back');
   const router = useRouter();
   const [diseaseResult, setDiseaseResult] = useState(null);
+  const { resize } = useResizePlugin();
 
   useEffect(() => {
     const handler = (data) => setDiseaseResult(data);
@@ -25,13 +26,13 @@ export default function LiveCameraScreen() {
     return () => voiceEventEmitter.off('DISEASE_RESULT', handler);
   }, []);
 
-  const model = useTensorflowModel(require('../models/soybean_model.tflite'));
+  const model = useTensorflowModel(require('../models/soyabean_model_v2.tflite'));
 
-  const handleDetection = (labelIndex, confidence) => {
+  const handleDetection = useCallback((labelIndex, confidence) => {
     try {
       const labels = require('../models/disease_labels.json');
       const label = labels[String(labelIndex)];
-      if (label && labelIndex !== 1) { // Skip healthy (index 1)
+      if (label && labelIndex !== 2) {
         const captureId = `scan-${Date.now()}-${labelIndex}`;
         saveScan({
           capture_id: captureId,
@@ -54,7 +55,9 @@ export default function LiveCameraScreen() {
     } catch (err) {
       console.error('Detection error:', err);
     }
-  };
+  }, []);
+
+  const handleDetectionJS = Worklets.createRunOnJS(handleDetection);
 
   const frameProcessor = useFrameProcessor((frame) => {
     'worklet';
@@ -64,9 +67,9 @@ export default function LiveCameraScreen() {
     const scores = output[0];
     const maxIdx = scores.indexOf(Math.max(...scores));
     if (scores[maxIdx] > 0.5) {
-      runOnJS(handleDetection)(maxIdx, scores[maxIdx]);
+      handleDetectionJS(maxIdx, scores[maxIdx]);
     }
-  }, [model]);
+  }, [model, resize, handleDetectionJS]);
 
   if (!hasPermission) {
     return (
@@ -94,7 +97,6 @@ export default function LiveCameraScreen() {
         device={device}
         isActive={true}
         frameProcessor={frameProcessor}
-        fps={5}
       />
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
         <Text style={styles.backButtonText}>Cancel</Text>

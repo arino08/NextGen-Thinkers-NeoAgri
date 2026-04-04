@@ -4,9 +4,10 @@ import { FONTS } from '../../lib/voiceStyles';
 
 const STATUS_MESSAGES = {
   idle: 'NeoAgri तैयार है',
-  connecting: 'जोड़ा जा रहा है...',
-  listening: 'सुन रहा हूँ...',
-  speaking: 'NeoAgri बोल रहा है',
+  connecting: 'Connecting...',
+  listening: '🎙️ सुन रहा हूँ...',
+  processing: '🤔 सोच रहा हूँ...',
+  speaking: '🔊 NeoAgri बोल रहा है',
   offline: 'ऑफलाइन — Limited mode',
 };
 

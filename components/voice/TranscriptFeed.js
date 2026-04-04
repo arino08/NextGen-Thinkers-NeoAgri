@@ -2,24 +2,15 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, FlatList } from 'react-native';
 import { COLORS, FONTS } from '../../lib/voiceStyles';
 
-export default function TranscriptFeed({ transcript = '', history = [] }) {
-  const recentHistory = history.slice(-3);
+export default function TranscriptFeed({ transcript = '', agentTranscript = '', history = [] }) {
   const cursorOpacity = useRef(new Animated.Value(1)).current;
   const flatListRef = useRef(null);
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
-        Animated.timing(cursorOpacity, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(cursorOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
+        Animated.timing(cursorOpacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(cursorOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
       ])
     );
     animation.start();
@@ -28,39 +19,51 @@ export default function TranscriptFeed({ transcript = '', history = [] }) {
 
   useEffect(() => {
     if (flatListRef.current) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 50);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
     }
-  }, [transcript, history]);
+  }, [transcript, agentTranscript, history]);
 
   const renderItem = ({ item }) => {
     const isUser = item.role === 'user';
     return (
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
+        <Text style={[styles.roleLabel, isUser ? styles.userLabel : styles.aiLabel]}>
+          {isUser ? '👤 You' : '🤖 NeoAgri'}
+        </Text>
         <Text style={styles.text}>{item.text}</Text>
       </View>
     );
   };
 
   const renderFooter = () => {
-    if (!transcript) return null;
-    return (
-      <View style={[styles.bubble, styles.userBubble]}>
-        <Text style={styles.text}>
-          {transcript}
-          <Animated.Text style={[styles.cursor, { opacity: cursorOpacity }]}>|</Animated.Text>
-        </Text>
-      </View>
-    );
+    const elements = [];
+
+    // Agent streaming transcript
+    if (agentTranscript) {
+      elements.push(
+        <View key="agent-stream" style={[styles.bubble, styles.aiBubble]}>
+          <Text style={[styles.roleLabel, styles.aiLabel]}>🤖 NeoAgri</Text>
+          <Text style={styles.text}>
+            {agentTranscript}
+            <Animated.Text style={[styles.cursor, { opacity: cursorOpacity }]}>▊</Animated.Text>
+          </Text>
+        </View>
+      );
+    }
+
+    return elements.length > 0 ? <>{elements}</> : null;
   };
+
+  if (history.length === 0 && !agentTranscript) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
         ref={flatListRef}
-        data={recentHistory}
-        keyExtractor={(item, index) => index.toString()}
+        data={history}
+        keyExtractor={(_, index) => index.toString()}
         renderItem={renderItem}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
@@ -73,9 +76,9 @@ export default function TranscriptFeed({ transcript = '', history = [] }) {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     justifyContent: 'flex-end',
-    maxHeight: 250, // limit height so it scrolls
+    maxHeight: 320,
   },
   listContent: {
     flexGrow: 1,
@@ -85,13 +88,13 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     padding: 14,
     borderRadius: 16,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   userBubble: {
     alignSelf: 'flex-end',
     backgroundColor: '#0D3D2C',
     borderWidth: 1,
-    borderColor: COLORS.orbTeal,
+    borderColor: 'rgba(0,200,150,0.3)',
     borderBottomRightRadius: 4,
   },
   aiBubble: {
@@ -99,11 +102,22 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBg,
     borderBottomLeftRadius: 4,
   },
+  roleLabel: {
+    fontSize: 11,
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  userLabel: {
+    color: COLORS.orbTeal,
+  },
+  aiLabel: {
+    color: COLORS.orbBlue,
+  },
   text: {
     ...FONTS.hindiBody,
   },
   cursor: {
     ...FONTS.hindiBody,
     color: COLORS.orbTeal,
-  }
+  },
 });

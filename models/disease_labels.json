@@ -1,42 +1,58 @@
 {
     "0": {
-        "name": "Caterpillar and Semilooper Pest Attack",
-        "name_hi": "इल्ली और सेमीलूपर कीट",
+        "name": "Bacterial Pustule",
+        "name_hi": "बैक्टीरियल पस्ट्यूल",
         "severity": "High",
         "severity_hi": "अधिक",
-        "cure": "Apply Chlorpyrifos 20EC @ 2ml/liter",
-        "cure_hi": "क्लोरपाइरीफ़ॉस 20EC 2ml प्रति लीटर पानी में डालें"
+        "cure": "Apply Copper Oxychloride 3g/L or Streptocycline 0.5g/L as foliar spray",
+        "cure_hi": "कॉपर ऑक्सीक्लोराइड 3g प्रति लीटर या स���ट्रेप्टोसाइक्लिन 0.5g प्रति लीटर पानी में छिड़काव करें"
     },
     "1": {
-        "name": "Healthy Soyabean",
+        "name": "Frogeye Leaf Spot",
+        "name_hi": "फ्रॉगआई लीफ स्पॉट",
+        "severity": "Medium",
+        "severity_hi": "मध्यम",
+        "cure": "Spray Mancozeb 2.5g/L or Carbendazim 1g/L at 10-day intervals",
+        "cure_hi": "मैन्कोज़ेब 2.5g या कार्बेन्डाज़िम 1g प���रति लीटर पानी में 10 दिन के अंतर पर छिड़काव करें"
+    },
+    "2": {
+        "name": "Healthy",
         "name_hi": "स्वस्थ सोयाबीन",
         "severity": "None",
         "severity_hi": "कोई नहीं",
-        "cure": "No treatment needed",
-        "cure_hi": "कोई उपचार आवश्यक नहीं"
-    },
-    "2": {
-        "name": "Soyabean Frog Leaf Eye",
-        "name_hi": "सोयाबीन फ्रॉग आई",
-        "severity": "Medium",
-        "severity_hi": "मध्यम",
-        "cure": "Spray Mancozeb 2.5g/liter",
-        "cure_hi": "मैन्कोज़ेब 2.5g प्रति लीटर पानी में छिड़काव करें"
+        "cure": "No treatment needed. Crop is healthy.",
+        "cure_hi": "कोई उपचार आव��्यक नहीं। फसल स्वस्थ है।"
     },
     "3": {
-        "name": "Soyabean Spectoria Brown Spot",
-        "name_hi": "सोयाबीन भूरा धब्बा",
-        "severity": "Medium",
-        "severity_hi": "मध्यम",
-        "cure": "Apply Carbendazim 1g/liter",
-        "cure_hi": "कार्बेन्डाज़िम 1g प्रति लीटर पानी में डालें"
-    },
-    "4": {
-        "name": "Powdery Mildew",
-        "name_hi": "पाउडरी मिल्ड्यू",
+        "name": "Rust",
+        "name_hi": "रतुआ (रस्ट)",
         "severity": "High",
         "severity_hi": "अधिक",
-        "cure": "Apply sulfur-based treatments.",
-        "cure_hi": "सल्फर-आधारित उपचार लागू करें।"
+        "cure": "Spray Propiconazole 1ml/L or Hexaconazole 2ml/L immediately. Repeat after 15 days.",
+        "cure_hi": "प्रोपिकोनाज़ोल 1ml या हेक्साकोनाज़ोल 2ml प्रति लीटर पानी में तुरंत छिड़काव करें। 15 दिन बाद दोहराएं।"
+    },
+    "4": {
+        "name": "Sudden Death Syndrome",
+        "name_hi": "सडन डेथ सिंड्रोम",
+        "severity": "High",
+        "severity_hi": "अधिक",
+        "cure": "No chemical cure available. Remove infected plants. Improve drainage and use resistant varieties next season.",
+        "cure_hi": "कोई रासायनिक उपचार नहीं है। संक्रमित पौधे हटाएं। जल निकासी सुधारें और अगले सीज़न में प्रतिरोधी किस्में लगाएं।"
+    },
+    "5": {
+        "name": "Target Leaf Spot",
+        "name_hi": "टारगेट लीफ स्पॉ���",
+        "severity": "Medium",
+        "severity_hi": "मध्यम",
+        "cure": "Apply Azoxystrobin 1ml/L or Thiophanate-methyl 1.5g/L as foliar spray",
+        "cure_hi": "एज़ोक्सीस्ट्रोबिन 1ml या थायोफैनेट-मिथा���ल 1.5g प्रति लीटर पानी म��ं छिड़काव करें"
+    },
+    "6": {
+        "name": "Yellow Mosaic",
+        "name_hi": "पीला मोज़ेक (यलो मोज़ेक)",
+        "severity": "High",
+        "severity_hi": "अधिक",
+        "cure": "Control whitefly vector with Imidacloprid 0.3ml/L. Remove infected plants to prevent spread.",
+        "cure_hi": "सफेद मक्खी नियंत्रण के लिए इमिडाक्लोप्रिड 0.3ml प्रति लीटर छिड़कें। संक्रमित पौधे हटाएं।"
     }
 }

@@ -43,7 +43,8 @@
       "expo-font",
       "expo-sqlite",
       "react-native-vision-camera",
-      "react-native-fast-tflite"
+      "react-native-fast-tflite",
+      "expo-audio"
     ],
     "extra": {
       "router": {},

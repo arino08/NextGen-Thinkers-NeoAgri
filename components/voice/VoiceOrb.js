@@ -1,145 +1,191 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated, Pressable } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../lib/voiceStyles';
 
-export default function VoiceOrb({ onPress, state = 'idle', amplitude = 0 }) {
+export default function VoiceOrb({ onPress, onPressIn, onPressOut, state = 'idle', amplitude = 0 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const ripple1 = useRef(new Animated.Value(0)).current;
-  const ripple2 = useRef(new Animated.Value(0)).current;
-  const ripple3 = useRef(new Animated.Value(0)).current;
-  const spinAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const spinAnim1 = useRef(new Animated.Value(0)).current;
+  const spinAnim2 = useRef(new Animated.Value(0)).current;
+  const spinAnim3 = useRef(new Animated.Value(0)).current;
+  const holdScale = useRef(new Animated.Value(1)).current;
+  const rotateSpinner = useRef(new Animated.Value(0)).current;
 
+  // Fluid continuous rotation of 3 overlapping gradients
+  useEffect(() => {
+    const startSpin = (anim, duration, toValue) => {
+      Animated.loop(
+        Animated.timing(anim, {
+          toValue,
+          duration,
+          useNativeDriver: true,
+        })
+      ).start();
+    };
+    startSpin(spinAnim1, 8000, 1);
+    startSpin(spinAnim2, 12000, -1);
+    startSpin(spinAnim3, 10000, 1);
+
+    return () => {
+      spinAnim1.stopAnimation();
+      spinAnim2.stopAnimation();
+      spinAnim3.stopAnimation();
+    };
+  }, [spinAnim1, spinAnim2, spinAnim3]);
+
+  // Idle / Connecting / Processing breathing
   useEffect(() => {
     let animation;
-    if (state === 'idle') {
+    if (state === 'idle' || state === 'connecting' || state === 'processing') {
+      const speed = state === 'idle' ? 2000 : 1000;
+      const toScale = state === 'idle' ? 1.05 : 1.15;
       animation = Animated.loop(
         Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.05,
-            duration: 1250,
+          Animated.timing(pulseAnim, {
+            toValue: toScale,
+            duration: speed,
             useNativeDriver: true,
           }),
-          Animated.timing(scaleAnim, {
+          Animated.timing(pulseAnim, {
             toValue: 1.0,
-            duration: 1250,
+            duration: speed,
             useNativeDriver: true,
           }),
         ])
       );
       animation.start();
-    } else if (state !== 'listening') {
-      scaleAnim.setValue(1);
+    } else {
+      pulseAnim.setValue(1);
     }
+    return () => { if (animation) animation.stop(); };
+  }, [state, pulseAnim]);
 
-    return () => {
-      if (animation) animation.stop();
-    };
-  }, [state, scaleAnim]);
-
+  // Listening / Speaking scale mapped to amplitude or strong pulse
   useEffect(() => {
     if (state === 'listening') {
       Animated.spring(scaleAnim, {
-        toValue: 1.0 + (amplitude * 0.4),
+        toValue: 1.0 + (amplitude * 0.8),
         useNativeDriver: true,
-        bounciness: 20,
-        speed: 12,
+        bounciness: 25,
+        speed: 16,
+      }).start();
+    } else if (state === 'speaking') {
+        const speakingAmplitude = Math.max(0.1, amplitude);
+        Animated.spring(scaleAnim, {
+            toValue: 1.05 + (speakingAmplitude * 0.6),
+            useNativeDriver: true,
+            bounciness: 15,
+            speed: 20,
+        }).start();
+    } else {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
       }).start();
     }
   }, [state, amplitude, scaleAnim]);
 
+  // Connecting spinner ring
   useEffect(() => {
-    if (state === 'speaking') {
-      const startRipple = (anim, delay) => {
-        anim.setValue(0);
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.loop(
-            Animated.timing(anim, {
-              toValue: 1,
-              duration: 1600,
-              useNativeDriver: true,
-            })
-          )
-        ]).start();
-      };
-
-      startRipple(ripple1, 0);
-      startRipple(ripple2, 400);
-      startRipple(ripple3, 800);
-    } else {
-      ripple1.stopAnimation();
-      ripple2.stopAnimation();
-      ripple3.stopAnimation();
-      ripple1.setValue(0);
-      ripple2.setValue(0);
-      ripple3.setValue(0);
-    }
-  }, [state, ripple1, ripple2, ripple3]);
-
-  useEffect(() => {
-    if (state === 'connecting') {
-      spinAnim.setValue(0);
+    if (state === 'connecting' || state === 'processing') {
+      rotateSpinner.setValue(0);
       Animated.loop(
-        Animated.timing(spinAnim, {
+        Animated.timing(rotateSpinner, {
           toValue: 1,
-          duration: 800,
+          duration: state === 'processing' ? 1500 : 800,
           useNativeDriver: true,
         })
       ).start();
     } else {
-      spinAnim.stopAnimation();
-      spinAnim.setValue(0);
+      rotateSpinner.stopAnimation();
     }
-  }, [state, spinAnim]);
+  }, [state, rotateSpinner]);
 
-  const renderRipple = (anim) => {
-    const scale = anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [1, 2],
-    });
-    const opacity = anim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.6, 0],
-    });
-    return (
-      <Animated.View
-        style={[
-          styles.ripple,
-          {
-            transform: [{ scale }],
-            opacity,
-          },
-        ]}
-      />
-    );
+  const spin1 = spinAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-360deg', '0deg', '360deg'] });
+  const spin2 = spinAnim2.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-360deg', '0deg', '360deg'] });
+  const spin3 = spinAnim3.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-360deg', '0deg', '360deg'] });
+  const spinArc = rotateSpinner.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  // Siri-like fluid gradients depending on state
+  const getGradients = () => {
+    switch (state) {
+      case 'listening': return ['#ff3b3b', '#ff6b6b', '#ff8e8e'];
+      case 'speaking': return ['#3b87ff', '#6ba1ff', '#8ebaff'];
+      case 'processing': return ['#ff9f3b', '#ffb76b', '#ffcc8e'];
+      case 'connecting': return ['#3b87ff', '#ff9f3b', '#ff3b3b'];
+      case 'offline': return ['#888888', '#aaaaaa', '#cccccc'];
+      case 'idle':
+      default:
+        return ['#2ebf91', '#8360c3', '#2ebf91'];
+    }
   };
 
-  const spin = spinAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
-  });
+  const colors = getGradients();
+
+  const icon = state === 'listening' ? '🔴' : '🎤';
+  const labelText = {
+    offline: 'Offline',
+    idle: 'Hold to speak',
+    connecting: 'Connecting...',
+    listening: 'Recording...',
+    processing: 'Thinking...',
+    speaking: 'Speaking...',
+  }[state] || '';
+
+  const handlePressIn = () => {
+    if (onPressIn) {
+      Animated.spring(holdScale, {
+        toValue: 0.85,
+        useNativeDriver: true,
+        bounciness: 15,
+      }).start();
+      onPressIn();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (onPressOut) {
+      Animated.spring(holdScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        bounciness: 15,
+      }).start();
+      onPressOut();
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {state === 'speaking' && renderRipple(ripple1)}
-      {state === 'speaking' && renderRipple(ripple2)}
-      {state === 'speaking' && renderRipple(ripple3)}
-      {state === 'connecting' && (
-        <Animated.View style={[styles.arc, { transform: [{ rotate: spin }] }]} />
+      {(state === 'connecting' || state === 'processing') && (
+        <Animated.View style={[styles.spinnerArc, { transform: [{ rotate: spinArc }] }]} />
       )}
-      <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
+
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
         <Animated.View style={[
-          styles.orb,
-          {
-            transform: [{ scale: scaleAnim }],
-            backgroundColor: state === 'offline' ? COLORS.orbGrey : state === 'speaking' ? COLORS.orbBlue : state === 'connecting' ? COLORS.orbAmber : COLORS.orbTeal,
-            shadowColor: state === 'offline' ? 'transparent' : COLORS.orbTeal
-          }
+          styles.orbBase,
+          { transform: [{ scale: Animated.multiply(scaleAnim, Animated.multiply(pulseAnim, holdScale)) }] }
         ]}>
-          <Text style={styles.icon}>🎤</Text>
+          <Animated.View style={[styles.layer, { transform: [{ rotate: spin1 }] }]}>
+             <LinearGradient colors={[colors[0], 'transparent']} style={styles.gradientFill} start={{x:0, y:0}} end={{x:1, y:1}} />
+          </Animated.View>
+          <Animated.View style={[styles.layer, { transform: [{ rotate: spin2 }] }]}>
+             <LinearGradient colors={['transparent', colors[1]]} style={styles.gradientFill} start={{x:0, y:1}} end={{x:1, y:0}} />
+          </Animated.View>
+          <Animated.View style={[styles.layer, { transform: [{ rotate: spin3 }] }]}>
+             <LinearGradient colors={[colors[2], 'transparent']} style={styles.gradientFill} start={{x:1, y:0}} end={{x:0, y:1}} opacity={0.6}/>
+          </Animated.View>
+
+          <View style={styles.innerGlass}>
+            <Text style={styles.icon}>{icon}</Text>
+          </View>
         </Animated.View>
-      </TouchableOpacity>
-      {state === 'offline' && <Text style={styles.offlineText}>ऑफलाइन</Text>}
+      </Pressable>
+      {labelText ? <Text style={styles.label}>{labelText}</Text> : null}
     </View>
   );
 }
@@ -149,40 +195,60 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  offlineText: {
+  label: {
     ...FONTS.hindiSmall,
-    marginTop: 20,
-    color: COLORS.orbGrey,
+    marginTop: 24,
+    color: '#888',
+    fontSize: 15,
+    fontWeight: '500',
+    letterSpacing: 1,
   },
-  ripple: {
+  spinnerArc: {
     position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: COLORS.orbBlue,
+    width: 210,
+    height: 210,
+    borderRadius: 105,
+    borderWidth: 3,
+    borderColor: 'rgba(150, 150, 150, 0.2)',
+    borderTopColor: COLORS.orbAmber,
+    top: -15, // center around 180 orb
   },
-  orb: {
+  orbBase: {
     width: 180,
     height: 180,
     borderRadius: 90,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    backgroundColor: '#1a1a1a', // dark base to make gradients pop
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+    overflow: 'hidden',
   },
-  arc: {
+  layer: {
     position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 4,
-    borderColor: 'transparent',
-    borderTopColor: COLORS.orbAmber,
-    zIndex: 1,
+    width: '140%', // larger than base so it rotates without clipping edges
+    height: '140%',
+    borderRadius: 180,
+    opacity: 0.8,
+  },
+  gradientFill: {
+    flex: 1,
+    borderRadius: 180,
+  },
+  innerGlass: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.1)', // glassy effect
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   icon: {
-    fontSize: 64,
-  },
+    fontSize: 36,
+  }
 });

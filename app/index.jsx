@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, Animated, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import FluidBlob from '../components/voice/FluidBlob';
+import VoiceOrb from '../components/voice/VoiceOrb';
 import StatusBanner from '../components/voice/StatusBanner';
 import TranscriptFeed from '../components/voice/TranscriptFeed';
 import DiseaseCard from '../components/voice/DiseaseCard';
-import LoadingScreen from '../components/voice/LoadingScreen';
-import DemoMenu from '../components/voice/DemoMenu';
-import { COLORS, FONTS } from '../lib/voiceStyles';
+import { COLORS } from '../lib/voiceStyles';
 
 import { useVoiceSession } from '../lib/useVoiceSession';
 import { TOOL_HANDLERS } from '../lib/VoiceAgentTools';
@@ -29,25 +27,6 @@ export default function Index() {
   } = useVoiceSession(TOOL_HANDLERS);
 
   const [diseaseResult, setDiseaseResult] = useState(null);
-  const [showLoading, setShowLoading] = useState(true);
-  const [showDemoMenu, setShowDemoMenu] = useState(false);
-  const fadeOut = useState(new Animated.Value(1))[0];
-
-  // Auto-connect on mount
-  useEffect(() => {
-    startSession();
-  }, []);
-
-  // Fade out loading once connected
-  useEffect(() => {
-    if (sessionActive && showLoading) {
-      Animated.timing(fadeOut, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start(() => setShowLoading(false));
-    }
-  }, [sessionActive, showLoading]);
 
   useEffect(() => {
     const handler = ({ screen, params }) => router.push({ pathname: `/${screen}`, params });
@@ -61,6 +40,19 @@ export default function Index() {
     return () => voiceEventEmitter.off('DISEASE_RESULT', handler);
   }, []);
 
+  const handleOrbPress = () => {
+    if (!sessionActive) {
+      // First tap: connect the session
+      if (status === 'idle' || status === 'offline') {
+        startSession();
+      } else if (status === 'connecting') {
+        // Ignore taps while handshake is in progress.
+        return;
+      }
+    }
+    // When session is active, press-and-hold handles recording
+  };
+
   const handlePressIn = () => {
     if (sessionActive && (status === 'idle' || status === 'speaking')) {
       startRecording();
@@ -73,46 +65,10 @@ export default function Index() {
     }
   };
 
-  const handleDemoTool = async (toolName) => {
-    if (TOOL_HANDLERS[toolName]) {
-      const result = await TOOL_HANDLERS[toolName]({});
-      console.log(`[Demo] ${toolName}:`, result);
-    }
-  };
-
-  const blobState = sessionActive ? status : 'idle';
-  const statusLabel = {
-    idle: 'बोलने के लिए दबाएं',
-    listening: 'सुन रहा हूँ...',
-    processing: 'सोच रहा हूँ...',
-    speaking: 'बोल रहा हूँ...',
-    connecting: 'जुड़ रहा है...',
-    offline: 'ऑफ़लाइन',
-  }[status] || '';
-
   return (
     <SafeAreaView style={styles.container}>
-      {/* Loading overlay */}
-      {showLoading && (
-        <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: fadeOut, zIndex: 100 }]}>
-          <LoadingScreen />
-        </Animated.View>
-      )}
-
       <StatusBanner status={status} />
 
-      {/* Demo button — top right */}
-      {sessionActive && (
-        <TouchableOpacity
-          style={styles.demoButton}
-          onPress={() => setShowDemoMenu(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.demoButtonText}>🧪</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Transcript area */}
       <View style={styles.transcriptContainer}>
         <TranscriptFeed
           history={history}
@@ -121,16 +77,14 @@ export default function Index() {
         />
       </View>
 
-      {/* Blob area */}
-      <View style={styles.blobContainer}>
-        <FluidBlob
-          state={blobState}
-          amplitude={amplitude}
-          onPress={() => {}}
+      <View style={styles.orbContainer}>
+        <VoiceOrb
+          onPress={handleOrbPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
+          state={sessionActive ? status : (status === 'connecting' ? 'connecting' : 'idle')}
+          amplitude={amplitude}
         />
-        <Text style={styles.statusLabel}>{sessionActive ? statusLabel : ''}</Text>
       </View>
 
       {diseaseResult && (
@@ -139,13 +93,6 @@ export default function Index() {
           onDismiss={() => setDiseaseResult(null)}
         />
       )}
-
-      {/* Demo menu modal */}
-      <DemoMenu
-        visible={showDemoMenu}
-        onClose={() => setShowDemoMenu(false)}
-        onRunTool={handleDemoTool}
-      />
     </SafeAreaView>
   );
 }
@@ -161,35 +108,12 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     justifyContent: 'flex-end',
-    paddingBottom: 10,
+    paddingBottom: 20,
   },
-  blobContainer: {
+  orbContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 30,
-  },
-  statusLabel: {
-    ...FONTS.hindiSmall,
-    color: '#666',
-    fontSize: 14,
-    marginTop: 8,
-    letterSpacing: 0.5,
-  },
-  demoButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 50,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  demoButtonText: {
-    fontSize: 20,
+    height: 280,
+    marginBottom: 30,
   },
 });

@@ -80,7 +80,7 @@ export default function DiseaseCard({ disease, onDismiss }) {
 
         <Text style={styles.cureText}>{disease.cure_hi}</Text>
 
-        <Text style={styles.confidenceText}>Confidence: {Math.round(disease.confidence * 100)}%</Text>
+        <Text style={styles.confidenceText}>सटीकता: {Math.round(disease.confidence * 100)}%</Text>
 
         <TouchableOpacity
           style={styles.button}
@@ -99,7 +99,7 @@ export default function DiseaseCard({ disease, onDismiss }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.cardBg,
+    backgroundColor: '#0D110F',
     padding: 24,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -109,10 +109,10 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#333',
-    borderRadius: 2,
+    width: 32,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 1.5,
     alignSelf: 'center',
     marginBottom: 20,
   },

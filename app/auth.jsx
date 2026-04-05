@@ -63,7 +63,7 @@ function PhoneStep({ onNext }) {
 
       <View style={styles.phoneRow}>
         <View style={styles.countryCode}>
-          <Text style={styles.countryCodeText}>🇮🇳 +91</Text>
+          <Text style={styles.countryCodeText}>+91</Text>
         </View>
         <TextInput
           style={styles.phoneInput}
@@ -379,11 +379,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: COLORS.orbTeal,
+    fontSize: 28,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 15,

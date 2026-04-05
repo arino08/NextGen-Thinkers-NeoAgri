@@ -138,7 +138,7 @@ export default function CaptureScreen() {
       )}
 
       <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>Cancel</Text>
+        <Text style={styles.backButtonText}>← वापस</Text>
       </TouchableOpacity>
 
       {/* Instructions */}
@@ -197,13 +197,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 50,
     left: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   backButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    fontWeight: '500',
   },
   permissionContainer: {
     flex: 1,

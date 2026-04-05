@@ -28,7 +28,7 @@ export default function TranscriptFeed({ transcript = '', agentTranscript = '', 
     return (
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.aiBubble]}>
         <Text style={[styles.roleLabel, isUser ? styles.userLabel : styles.aiLabel]}>
-          {isUser ? '👤 You' : '🤖 NeoAgri'}
+          {isUser ? 'आप' : 'NeoAgri'}
         </Text>
         <Text style={styles.text}>{item.text}</Text>
       </View>
@@ -42,7 +42,7 @@ export default function TranscriptFeed({ transcript = '', agentTranscript = '', 
     if (agentTranscript) {
       elements.push(
         <View key="agent-stream" style={[styles.bubble, styles.aiBubble]}>
-          <Text style={[styles.roleLabel, styles.aiLabel]}>🤖 NeoAgri</Text>
+          <Text style={[styles.roleLabel, styles.aiLabel]}>NeoAgri</Text>
           <Text style={styles.text}>
             {agentTranscript}
             <Animated.Text style={[styles.cursor, { opacity: cursorOpacity }]}>▊</Animated.Text>
@@ -86,26 +86,27 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '85%',
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    marginBottom: 8,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: '#0D3D2C',
-    borderWidth: 1,
-    borderColor: 'rgba(0,200,150,0.3)',
+    backgroundColor: 'rgba(0,200,150,0.08)',
     borderBottomRightRadius: 4,
   },
   aiBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: COLORS.cardBg,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderBottomLeftRadius: 4,
   },
   roleLabel: {
-    fontSize: 11,
-    marginBottom: 4,
-    fontWeight: '600',
+    fontSize: 10,
+    marginBottom: 3,
+    fontWeight: '500',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   userLabel: {
     color: COLORS.orbTeal,

@@ -181,9 +181,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingVertical: 14,
   },
   backBtn: {
     marginRight: 16,
@@ -205,8 +203,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 28,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.orbTeal + '33',
   },
   heroValue: {
     fontSize: 42,
@@ -232,8 +228,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     width: '47%',
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   statValue: {
     fontSize: 28,
@@ -251,8 +245,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   breakdownTitle: {
     ...FONTS.hindiBody,

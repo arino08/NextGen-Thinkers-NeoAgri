@@ -185,11 +185,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   tagline: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '400',
-    color: '#5A6B60',
-    marginTop: 6,
-    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.2)',
+    marginTop: 8,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   loadingArea: {
     alignItems: 'center',
@@ -221,10 +222,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#00C896',
   },
   loadingText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#3A4A40',
-    letterSpacing: 2,
+    fontSize: 11,
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.15)',
+    letterSpacing: 3,
     textTransform: 'uppercase',
   },
 });

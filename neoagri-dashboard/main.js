@@ -65,17 +65,20 @@ function addFieldMarker(lat, lng, label, sev, id) {
   const c = colors[sev] || '#888';
 
   const icon = L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="
-      width: 14px; height: 14px; border-radius: 50%;
-      background: ${c}; border: 2px solid #fff;
-      box-shadow: 0 0 10px ${c}88;
-    "></div>`,
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
+    className: 'disease-marker',
+    html: `<div class="marker-pulse" style="--mc:${c}">
+      <div style="
+        width: 18px; height: 18px; border-radius: 50%;
+        background: ${c}; border: 2px solid #fff;
+        box-shadow: 0 0 12px ${c}, 0 0 24px ${c}66;
+        position: relative; z-index: 2;
+      "></div>
+    </div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
   });
 
-  const m = L.marker([lat, lng], { icon }).addTo(map);
+  const m = L.marker([lat, lng], { icon, zIndexOffset: 500 }).addTo(map);
   m.bindPopup(`<b style="color:#333">${label}</b><br><span style="color:#666">Severity: ${sev}</span>`);
   if (id) markers[id] = m;
 }
@@ -301,21 +304,101 @@ function simulateDrone(id) {
   bar.style.width = '0%';
   title.textContent = `Drone Dispatched — ${id}`;
 
-  const stages = [
-    { pct: 10, text: 'Taking off...' },
-    { pct: 30, text: 'Flying to field...' },
-    { pct: 50, text: 'Reached field — scanning crops...' },
-    { pct: 70, text: 'AI analysis in progress...' },
-    { pct: 90, text: 'Generating report...' },
-    { pct: 100, text: 'Scan complete! Click "Complete" to finish.' },
+  const booking = bookings.find(b => (b.booking_id || b.id) === id);
+  const baseLat = booking?.latitude || MAP_CENTER[0];
+  const baseLng = booking?.longitude || MAP_CENTER[1];
+
+  // Diseases the drone can randomly detect (excluding Healthy)
+  const DETECTABLE = [
+    { name: 'Bacterial Pustule', sev: 'high' },
+    { name: 'Frogeye Leaf Spot', sev: 'medium' },
+    { name: 'Rust', sev: 'high' },
+    { name: 'Sudden Death Syndrome', sev: 'high' },
+    { name: 'Target Leaf Spot', sev: 'medium' },
+    { name: 'Yellow Mosaic', sev: 'high' },
   ];
+
+  // Generate 3-6 random detections
+  const numDetections = 3 + Math.floor(Math.random() * 4);
+  const detections = [];
+
+  for (let i = 0; i < numDetections; i++) {
+    const disease = DETECTABLE[Math.floor(Math.random() * DETECTABLE.length)];
+    const lat = baseLat + (Math.random() - 0.5) * 0.012;
+    const lng = baseLng + (Math.random() - 0.5) * 0.012;
+    const confidence = +(0.70 + Math.random() * 0.25).toFixed(2);
+    const capture_id = `${id}-det-${Date.now()}-${i}`;
+    detections.push({ capture_id, latitude: lat, longitude: lng, disease: disease.name, confidence, sev: disease.sev });
+  }
+
+  const stages = [
+    { pct: 10, text: 'Taking off...', detIdx: -1 },
+    { pct: 25, text: 'Flying to field...', detIdx: -1 },
+    { pct: 40, text: 'Reached field — starting scan...', detIdx: 0 },
+    { pct: 55, text: 'Scanning crops — abnormality detected!', detIdx: Math.min(1, numDetections - 1) },
+    { pct: 70, text: `Found ${numDetections} diseased spots — analyzing...`, detIdx: Math.min(2, numDetections - 1) },
+    { pct: 85, text: 'AI analysis complete — generating report...', detIdx: -1 },
+    { pct: 95, text: `${numDetections} diseases mapped! Finishing up...`, detIdx: -1 },
+  ];
+
+  let droppedSoFar = 0;
 
   stages.forEach((s, i) => {
     setTimeout(() => {
       bar.style.width = s.pct + '%';
       detail.textContent = s.text;
-    }, (i + 1) * 2000);
+
+      // Progressively drop detection markers on the map during scanning stages
+      if (s.pct >= 40 && s.pct <= 70) {
+        const dropCount = Math.ceil(numDetections * (s.pct - 30) / 60);
+        while (droppedSoFar < dropCount && droppedSoFar < detections.length) {
+          const d = detections[droppedSoFar];
+          addFieldMarker(d.latitude, d.longitude, d.disease, d.sev, d.capture_id);
+          droppedSoFar++;
+        }
+      }
+    }, (i + 1) * 1800);
   });
+
+  // Auto-complete after all stages finish
+  setTimeout(async () => {
+    // Drop any remaining markers
+    while (droppedSoFar < detections.length) {
+      const d = detections[droppedSoFar];
+      addFieldMarker(d.latitude, d.longitude, d.disease, d.sev, d.capture_id);
+      droppedSoFar++;
+    }
+
+    try {
+      const res = await fetch(`${API}/drone/bookings/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scan_results: {
+            areas_scanned: booking?.area_acres || 1,
+            detections: detections.map(d => ({
+              capture_id: d.capture_id,
+              latitude: d.latitude,
+              longitude: d.longitude,
+              disease: d.disease,
+              confidence: d.confidence,
+            })),
+            timestamp: new Date().toISOString(),
+          }
+        })
+      });
+      if (res.ok) {
+        toast(`✅ Scan complete! ${numDetections} disease markers sent to farmer app.`);
+      } else {
+        toast('⚠️ Scan done, but failed to save results.', true);
+      }
+    } catch (e) {
+      toast('⚠️ Scan done, but server unreachable.', true);
+    }
+
+    hideSimulation();
+    await loadAll();
+  }, (stages.length + 1) * 1800);
 }
 
 function hideSimulation() {

@@ -216,4 +216,25 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 /* Leaflet overrides */
 .leaflet-container { background: #0a0e0c; }
 .leaflet-tile-pane { filter: saturate(0.3) brightness(0.5) contrast(1.1); }
-.custom-marker { background: none; border: none; }
+.custom-marker, .disease-marker { background: none !important; border: none !important; }
+.leaflet-marker-icon { z-index: 500 !important; }
+
+/* Pulsing disease markers */
+.marker-pulse {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.marker-pulse::before {
+  content: '';
+  position: absolute;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--mc, #ff4d4d);
+  opacity: 0;
+  animation: markerPulse 2s infinite;
+}
+@keyframes markerPulse {
+  0% { transform: scale(0.5); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
